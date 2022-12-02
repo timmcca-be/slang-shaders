@@ -249,21 +249,12 @@ void main()
                {
                   case k300TVL:
                   { 
-                     // 300TVL
-                     #define kMaxApertureGrilleSize       4
+                     #define kRGBX             (kRed  << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlack << 12)  
+                     #define kRBGX             (kRed  << 0) | (kBlue  << 4) | (kGreen << 8) | (kBlack << 12)  
+                     #define kBGRX             (kBlue << 0) | (kGreen << 4) | (kRed   << 8) | (kBlack << 12)  
                      
-                     #define kRGBX             kRed, kGreen, kBlue, kBlack  
-                     #define kRBGX             kRed, kBlue, kGreen, kBlack  
-                     #define kBGRX             kBlue, kGreen, kRed, kBlack  
-                     
-                     const uint kApertureGrilleMasks1080p300TVL[kBGRAxis * kMaxApertureGrilleSize] = 
-                     {
-                        kRGBX, kRBGX, kBGRX
-                     };
-                     
-                     colour_mask = kApertureGrilleMasks1080p300TVL[(lcd_subpixel_layout * kMaxApertureGrilleSize) + mask];   
-                     
-                     #undef kMaxApertureGrilleSize
+                     const uint rgb_mask[kBGRAxis] = { kRGBX, kRBGX, kBGRX };
+                     colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;   
                      
                      #undef kRGBX           
                      #undef kRBGX           
@@ -273,25 +264,16 @@ void main()
                   }
                   case k600TVL:
                   {
-                     #define kMaxApertureGrilleSize       2
+                     #define kMG               (kMagenta << 0) | (kGreen   << 6)  
+                     #define kYB               (kYellow  << 0) | (kBlue    << 6)
+                     #define kGM               (kGreen   << 0) | (kMagenta << 6)
                      
-                     #define kMG               kMagenta, kGreen  
-                     #define kYB               kYellow, kBlue  
-                     #define kGM               kGreen, kMagenta  
-                     
-                     const uint kApertureGrilleMasks1080p600TVL[kBGRAxis * kMaxApertureGrilleSize] = 
-                     {
-                        kMG, kYB, kGM
-                     };
-                     
-                     colour_mask = kApertureGrilleMasks1080p600TVL[(lcd_subpixel_layout * kMaxApertureGrilleSize) + mask]; 
-                     
-                     #undef kMaxApertureGrilleSize
-                     
+                     const uint rgb_mask[kBGRAxis] = { kMG, kYB, kGM };
+                     colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 6)) & 0x3F;
+
                      #undef kMG             
                      #undef kYB             
-                     #undef kGM   
-
+                     #undef kGM
 
                      break;
                   }
@@ -320,96 +302,62 @@ void main()
                switch(crt_resolution)
                {
                   case k300TVL:
-                  { 
-                     #define kMaxApertureGrilleSize       7
+                  {
+                     #define kRRGGBBX          (kRed  << 0) | (kRed  << 4) | (kGreen << 8) | (kGreen << 12) | (kBlue  << 16) | (kBlue  << 20) | (kBlack << 24)   
+                     #define kRRBBGGX          (kRed  << 0) | (kRed  << 4) | (kBlue  << 8) | (kBlue  << 12) | (kGreen << 16) | (kGreen << 20) | (kBlack << 24)    
+                     #define kBBGGRRX          (kBlue << 0) | (kBlue << 4) | (kGreen << 8) | (kGreen << 12) | (kRed   << 16) | (kRed   << 20) | (kBlack << 24)    
                      
-                     #define kRRGGBBX          kRed, kRed, kGreen, kGreen, kBlue, kBlue, kBlack  
-                     #define kRRBBGGX          kRed, kRed, kBlue, kBlue, kGreen, kGreen, kBlack  
-                     #define kBBGGRRX          kBlue, kBlue, kGreen, kGreen, kRed, kRed, kBlack  
-                     
-                     const uint kApertureGrilleMasks4K300TVL[kBGRAxis * kMaxApertureGrilleSize] = 
-                     { 
-                        kRRGGBBX, kRRBBGGX, kBBGGRRX
-                     };
-
-                     colour_mask = kApertureGrilleMasks4K300TVL[(lcd_subpixel_layout * kMaxApertureGrilleSize) + mask];    
-                     
-                     #undef kMaxApertureGrilleSize 
+                     const uint rgb_mask[kBGRAxis] = {  kRRGGBBX, kRRBBGGX, kBBGGRRX };
+                     colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;  
                      
                      #undef kRRGGBBX        
                      #undef kRRBBGGX       
                      #undef kBBGGRRX  
-  
                      
                      break;
                   }
                   case k600TVL:
                   {
-                     #define kMaxApertureGrilleSize       4
+                     #define kRGBX             (kRed  << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlack << 12)  
+                     #define kRBGX             (kRed  << 0) | (kBlue  << 4) | (kGreen << 8) | (kBlack << 12)  
+                     #define kBGRX             (kBlue << 0) | (kGreen << 4) | (kRed   << 8) | (kBlack << 12)  
                      
-                     #define kRGBX             kRed, kGreen, kBlue, kBlack  
-                     #define kRBGX             kRed, kBlue, kGreen, kBlack  
-                     #define kBGRX             kBlue, kGreen, kRed, kBlack  
-                     
-                     const uint kApertureGrilleMasks4K600TVL[kBGRAxis * kMaxApertureGrilleSize] = 
-                     { 
-                        kRGBX, kRBGX, kBGRX 
-                     };
-
-                     colour_mask = kApertureGrilleMasks4K600TVL[(lcd_subpixel_layout * kMaxApertureGrilleSize) + mask]; 
-                     
-                     #undef kMaxApertureGrilleSize 
+                     const uint rgb_mask[kBGRAxis] = { kRGBX, kRBGX, kBGRX };
+                     colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;   
                      
                      #undef kRGBX           
                      #undef kRBGX           
-                     #undef kBGRX   
+                     #undef kBGRX  
 
                      break;
                   }
                   case k800TVL:
                   {
-                     #define kMaxApertureGrilleSize       3
+                     #define kBGR              (kBlue  << 0) | (kGreen << 4) | (kRed  << 8) 
+                     #define kGBR              (kGreen << 0) | (kBlue  << 4) | (kRed  << 8)  
+                     #define kRGB              (kRed   << 0) | (kGreen << 4) | (kBlue << 8)  
                      
-                     #define kRGB              kRed, kGreen, kBlue  
-                     #define kGBR              kGreen, kBlue, kRed  
-                     #define kBGR              kBlue, kGreen, kRed  
-                     
-                     const uint kApertureGrilleMasks4K800TVL[kBGRAxis * kMaxApertureGrilleSize] = 
-                     { 
-                        kBGR, kGBR, kRGB 
-                     };
+                     const uint rgb_mask[kBGRAxis] = { kBGR, kGBR, kRGB };
+                     colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;   
 
-                     colour_mask = kApertureGrilleMasks4K800TVL[(lcd_subpixel_layout * kMaxApertureGrilleSize) + mask]; 
-                     
-                     #undef kMaxApertureGrilleSize 
-                     
                      #undef kRGB            
                      #undef kGBR            
                      #undef kBGR  
-                     
 
                      break;
                   }
                   case k1000TVL:
-                  {
-                     #define kMaxApertureGrilleSize       2
+                  {                     
+                     #define kMG               (kMagenta << 0) | (kGreen   << 6)  
+                     #define kYB               (kYellow  << 0) | (kBlue    << 6)
+                     #define kGM               (kGreen   << 0) | (kMagenta << 6)
+                     
+                     const uint rgb_mask[kBGRAxis] = { kMG, kYB, kGM };
+                     colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 6)) & 0x3F;
 
-                     #define kMG               kMagenta, kGreen  
-                     #define kYB               kYellow, kBlue  
-                     #define kGM               kGreen, kMagenta  
-                     
-                     const uint kApertureGrilleMasks4K1000TVL[kBGRAxis * kMaxApertureGrilleSize] = 
-                     { 
-                        kMG, kYB, kGM
-                     };
-
-                     colour_mask = kApertureGrilleMasks4K1000TVL[(lcd_subpixel_layout * kMaxApertureGrilleSize) + mask]; 
-                     
-                     #undef kMaxApertureGrilleSize  
-                     
                      #undef kMG             
                      #undef kYB             
-                     #undef kGM    
+                     #undef kGM 
 
                      break;
                   }
@@ -450,43 +398,28 @@ void main()
                   }
                   case k600TVL:
                   {
-                     #define kMaxApertureGrilleSize       7
+                     #define kRRGGBBX          (kRed  << 0) | (kRed  << 4) | (kGreen << 8) | (kGreen << 12) | (kBlue  << 16) | (kBlue  << 20) | (kBlack << 24)   
+                     #define kRRBBGGX          (kRed  << 0) | (kRed  << 4) | (kBlue  << 8) | (kBlue  << 12) | (kGreen << 16) | (kGreen << 20) | (kBlack << 24)    
+                     #define kBBGGRRX          (kBlue << 0) | (kBlue << 4) | (kGreen << 8) | (kGreen << 12) | (kRed   << 16) | (kRed   << 20) | (kBlack << 24)    
                      
-                     #define kRRGGBBX          kRed, kRed, kGreen, kGreen, kBlue, kBlue, kBlack  
-                     #define kRRBBGGX          kRed, kRed, kBlue, kBlue, kGreen, kGreen, kBlack  
-                     #define kBBGGRRX          kBlue, kBlue, kGreen, kGreen, kRed, kRed, kBlack  
-                     
-                     const uint kApertureGrilleMasks8K600TVL[kBGRAxis * kMaxApertureGrilleSize] = 
-                     { 
-                        kRRGGBBX, kRRBBGGX, kBBGGRRX 
-                     };
+                     const uint rgb_mask[kBGRAxis] = { kRRGGBBX, kRRBBGGX, kBBGGRRX };
 
-                     colour_mask = kApertureGrilleMasks8K600TVL[(lcd_subpixel_layout * kMaxApertureGrilleSize) + mask]; 
-                     
-                     #undef kMaxApertureGrilleSize 
+                     colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;  
                      
                      #undef kRRGGBBX        
                      #undef kRRBBGGX       
-                     #undef kBBGGRRX    
+                     #undef kBBGGRRX 
 
                      break;
                   }
                   case k800TVL:
-                  {
-                     #define kMaxApertureGrilleSize       5
+                  {                     
+                     #define kRYCBX            (kRed  << 0) | (kYellow  << 6) | (kCyan   << 12) | (kBlue  << 18) | (kBlack << 24)  
+                     #define kRMCGX            (kRed  << 0) | (kMagenta << 6) | (kCyan   << 12) | (kGreen << 18) | (kBlack << 24)  
+                     #define kBCYRX            (kBlue << 0) | (kCyan    << 6) | (kYellow << 12) | (kRed   << 18) | (kBlack << 24)  
                      
-                     #define kRYCBX            kRed, kYellow, kCyan, kBlue, kBlack  
-                     #define kRMCGX            kRed, kMagenta, kCyan, kGreen, kBlack  
-                     #define kBCYRX            kBlue, kCyan, kYellow, kRed, kBlack  
-                     
-                     const uint kApertureGrilleMasks8K800TVL[kBGRAxis * kMaxApertureGrilleSize] = 
-                     { 
-                        kRYCBX, kRMCGX, kBCYRX
-                     };
-
-                     colour_mask = kApertureGrilleMasks8K800TVL[(lcd_subpixel_layout * kMaxApertureGrilleSize) + mask]; 
-                     
-                     #undef kMaxApertureGrilleSize 
+                     const uint rgb_mask[kBGRAxis] = { kRYCBX, kRMCGX, kBCYRX  };
+                     colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 6)) & 0x3F;
                      
                      #undef kRYCBX          
                      #undef kRMCGX          
@@ -496,20 +429,13 @@ void main()
                   }
                   case k1000TVL:
                   {
-                     #define kMaxApertureGrilleSize       4
+                     #define kRGBX             (kRed  << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlack << 12)  
+                     #define kRBGX             (kRed  << 0) | (kBlue  << 4) | (kGreen << 8) | (kBlack << 12)  
+                     #define kBGRX             (kBlue << 0) | (kGreen << 4) | (kRed   << 8) | (kBlack << 12)  
                      
-                     #define kRGBX             kRed, kGreen, kBlue, kBlack  
-                     #define kRBGX             kRed, kBlue, kGreen, kBlack  
-                     #define kBGRX             kBlue, kGreen, kRed, kBlack  
+                     const uint rgb_mask[kBGRAxis] = { kRGBX, kRBGX, kBGRX };
                      
-                     const uint kApertureGrilleMasks8K1000TVL[kBGRAxis * kMaxApertureGrilleSize] = 
-                     { 
-                        kRGBX, kRBGX, kBGRX 
-                     };
-
-                     colour_mask = kApertureGrilleMasks8K1000TVL[(lcd_subpixel_layout * kMaxApertureGrilleSize) + mask]; 
-                     
-                     #undef kMaxApertureGrilleSize  
+                     colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;   
                      
                      #undef kRGBX           
                      #undef kRBGX           
@@ -547,17 +473,14 @@ void main()
                {
                   case k300TVL:
                   { 
-                     #define kMaxShadowMaskSizeX     6
-                     #define kMaxShadowMaskSizeY     4
+                     #define kGRRBBG              (kGreen << 0) | (kRed   << 4) | (kRed   << 8) | (kBlue  << 12) | (kBlue  << 16) | (kGreen << 20)
+                     #define kBBGGRR              (kBlue  << 0) | (kBlue  << 4) | (kGreen << 8) | (kGreen << 12) | (kRed   << 16) | (kRed   << 20)
                      
-                     #define kGRRBBG              kGreen, kRed, kRed, kBlue, kBlue, kGreen  
-                     #define kBBGGRR              kBlue, kBlue, kGreen, kGreen, kRed, kRed  
+                     #define kBRRGGB              (kBlue  << 0) | (kRed   << 4) | (kRed   << 8) | (kGreen << 12) | (kGreen << 16) | (kBlue  << 20)
+                     #define kGGBBRR              (kGreen << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlue  << 12) | (kRed   << 16) | (kRed   << 20)
                      
-                     #define kBRRGGB              kBlue, kRed, kRed, kGreen, kGreen, kBlue  
-                     #define kGGBBRR              kGreen, kGreen, kBlue, kBlue, kRed, kRed  
-                     
-                     #define kGBBRRG              kGreen, kBlue, kBlue, kRed, kRed, kGreen  
-                     #define kRRGGBB              kRed, kRed, kGreen, kGreen, kBlue, kBlue  
+                     #define kGBBRRG              (kGreen << 0) | (kBlue  << 4) | (kBlue  << 8) | (kRed   << 12) | (kRed   << 16) | (kGreen << 20)
+                     #define kRRGGBB              (kRed   << 0) | (kRed   << 4) | (kGreen << 8) | (kGreen << 12) | (kBlue  << 16) | (kBlue  << 20)
                      
                      /*
                         kGRRBBG
@@ -576,45 +499,35 @@ void main()
                         kRRGGBB
                      */
 
+                     const uint rgb_mask[kBGRAxis * 2] = { kGRRBBG, kBBGGRR, kBRRGGB, kGGBBRR, kGBBRRG, kRRGGBB };
+
                      if(shadow_y < 2)
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kGRRBBG, kBRRGGB, kGBBRRG };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 0] >> (mask * 4)) & 0xF;
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kBBGGRR, kGGBBRR, kRRGGBB };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 1] >> (mask * 4)) & 0xF;
                      }
-
-                     #undef kMaxShadowMaskSizeX 
-                     #undef kMaxShadowMaskSizeY 
                      
                      #undef kGRRBBG           
-                     #undef kBBGGRR       
+                     #undef kBBGGRR    
                      
                      #undef kBRRGGB            
-                     #undef kGGBBRR       
+                     #undef kGGBBRR      
                      
                      #undef kGBBRRG            
-                     #undef kRRGGBB            
-                     
-                     #undef kGRRBBG_GRRBBG_BBGGRR_BBGGRR  
-                     #undef kBRRGGB_BRRGGB_GGBBRR_GGBBRR  
-                     #undef kGBBRRG_GBBRRG_RRGGBB_RRGGBB   
+                     #undef kRRGGBB   
                      
                      break;
                   }
                   case k600TVL:
                   {
-                     #define kMaxShadowMaskSizeX     2
-                     #define kMaxShadowMaskSizeY     2
+                     #define kMG                  (kMagenta << 0) | (kGreen   << 6)  
+                     #define kGM                  (kGreen   << 0) | (kMagenta << 6)  
                      
-                     #define kMG                  kMagenta, kGreen  
-                     #define kGM                  kGreen, kMagenta  
-                     
-                     #define kYB                  kYellow, kBlue  
-                     #define kBY                  kBlue, kYellow  
+                     #define kYB                  (kYellow  << 0) | (kBlue    << 6)  
+                     #define kBY                  (kBlue    << 0) | (kYellow  << 6)  
                      
                      /*
                         kMG
@@ -627,20 +540,17 @@ void main()
                         kMG
                      */
 
+                     const uint rgb_mask[kBGRAxis * 2] = { kMG, kGM, kYB, kBY, kGM, kMG };
+
                      if(shadow_y < 1)
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kMG, kYB, kGM };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 0] >> (mask * 6)) & 0x3F;
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kGM, kBY, kMG };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 1] >> (mask * 6)) & 0x3F;
                      }
 
-                     #undef kMaxShadowMaskSizeX 
-                     #undef kMaxShadowMaskSizeY 
-                     
                      #undef kMG               
                      #undef kGM    
                      
@@ -742,18 +652,15 @@ void main()
                      break;
                   }
                   case k600TVL:
-                  {
-                     #define kMaxShadowMaskSizeX     6
-                     #define kMaxShadowMaskSizeY     4
+                  {                     
+                     #define kGRRBBG              (kGreen << 0) | (kRed   << 4) | (kRed   << 8) | (kBlue  << 12) | (kBlue  << 16) | (kGreen << 20)
+                     #define kBBGGRR              (kBlue  << 0) | (kBlue  << 4) | (kGreen << 8) | (kGreen << 12) | (kRed   << 16) | (kRed   << 20)
                      
-                     #define kGRRBBG              kGreen, kRed, kRed, kBlue, kBlue, kGreen  
-                     #define kBBGGRR              kBlue, kBlue, kGreen, kGreen, kRed, kRed  
+                     #define kBRRGGB              (kBlue  << 0) | (kRed   << 4) | (kRed   << 8) | (kGreen << 12) | (kGreen << 16) | (kBlue  << 20)
+                     #define kGGBBRR              (kGreen << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlue  << 12) | (kRed   << 16) | (kRed   << 20)
                      
-                     #define kBRRGGB              kBlue, kRed, kRed, kGreen, kGreen, kBlue  
-                     #define kGGBBRR              kGreen, kGreen, kBlue, kBlue, kRed, kRed  
-                     
-                     #define kGBBRRG              kGreen, kBlue, kBlue, kRed, kRed, kGreen  
-                     #define kRRGGBB              kRed, kRed, kGreen, kGreen, kBlue, kBlue  
+                     #define kGBBRRG              (kGreen << 0) | (kBlue  << 4) | (kBlue  << 8) | (kRed   << 12) | (kRed   << 16) | (kGreen << 20)
+                     #define kRRGGBB              (kRed   << 0) | (kRed   << 4) | (kGreen << 8) | (kGreen << 12) | (kBlue  << 16) | (kBlue  << 20)
                      
                      /*
                         kGRRBBG
@@ -772,19 +679,16 @@ void main()
                         kRRGGBB
                      */
 
+                     const uint rgb_mask[kBGRAxis * 2] = { kGRRBBG, kBBGGRR, kBRRGGB, kGGBBRR, kGBBRRG, kRRGGBB };
+
                      if(shadow_y < 2)
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kGRRBBG, kBRRGGB, kGBBRRG };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 0] >> (mask * 4)) & 0xF;
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kBBGGRR, kGGBBRR, kRRGGBB };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 1] >> (mask * 4)) & 0xF;
                      }
-                     
-                     #undef kMaxShadowMaskSizeX 
-                     #undef kMaxShadowMaskSizeY 
                      
                      #undef kGRRBBG           
                      #undef kBBGGRR    
@@ -798,15 +702,12 @@ void main()
                      break;
                   }
                   case k800TVL:
-                  {
-                     #define kMaxShadowMaskSizeX     2
-                     #define kMaxShadowMaskSizeY     2
+                  {                     
+                     #define kMG                  (kMagenta << 0) | (kGreen   << 6)  
+                     #define kGM                  (kGreen   << 0) | (kMagenta << 6)  
                      
-                     #define kMG                  kMagenta, kGreen  
-                     #define kGM                  kGreen, kMagenta  
-                     
-                     #define kYB                  kYellow, kBlue  
-                     #define kBY                  kBlue, kYellow  
+                     #define kYB                  (kYellow  << 0) | (kBlue    << 6)  
+                     #define kBY                  (kBlue    << 0) | (kYellow  << 6)  
                      
                      /*
                         kMG
@@ -819,19 +720,16 @@ void main()
                         kMG
                      */
 
+                     const uint rgb_mask[kBGRAxis * 2] = { kMG, kGM, kYB, kBY, kGM, kMG };
+
                      if(shadow_y < 1)
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kMG, kYB, kGM };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 0] >> (mask * 6)) & 0x3F;
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kGM, kBY, kMG };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 1] >> (mask * 6)) & 0x3F;
                      }
-                     
-                     #undef kMaxShadowMaskSizeX 
-                     #undef kMaxShadowMaskSizeY 
 
                      #undef kMG               
                      #undef kGM    
@@ -842,15 +740,12 @@ void main()
                      break;
                   }
                   case k1000TVL:
-                  {
-                     #define kMaxShadowMaskSizeX     2
-                     #define kMaxShadowMaskSizeY     2
+                  {                    
+                     #define kMG                  (kMagenta << 0) | (kGreen   << 6)  
+                     #define kGM                  (kGreen   << 0) | (kMagenta << 6)  
                      
-                     #define kMG                  kMagenta, kGreen  
-                     #define kGM                  kGreen, kMagenta  
-                     
-                     #define kYB                  kYellow, kBlue  
-                     #define kBY                  kBlue, kYellow  
+                     #define kYB                  (kYellow  << 0) | (kBlue    << 6)  
+                     #define kBY                  (kBlue    << 0) | (kYellow  << 6)  
                      
                      /*
                         kMG
@@ -863,22 +758,17 @@ void main()
                         kMG
                      */
 
+                     const uint rgb_mask[kBGRAxis * 2] = { kMG, kGM, kYB, kBY, kGM, kMG };
+
                      if(shadow_y < 1)
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kMG, kYB, kGM };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 0] >> (mask * 6)) & 0x3F;
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kGM, kBY, kMG };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 1] >> (mask * 6)) & 0x3F;
                      }
-                     
-                     #undef kMaxShadowMaskSizeX 
-                     #undef kMaxShadowMaskSizeY 
-                     
-                     #undef kXXXX     
-                     
+
                      #undef kMG               
                      #undef kGM    
                      
@@ -1037,19 +927,21 @@ void main()
                   }
                   case k800TVL:
                   {
-                     #define kMaxShadowMaskSizeX     6
-                     #define kMaxShadowMaskSizeY     4
+                     #define kGRRBBG              (kGreen << 0) | (kRed   << 4) | (kRed   << 8) | (kBlue  << 12) | (kBlue  << 16) | (kGreen << 20)
+                     #define kBBGGRR              (kBlue  << 0) | (kBlue  << 4) | (kGreen << 8) | (kGreen << 12) | (kRed   << 16) | (kRed   << 20)
                      
-                     #define kGRRBBG              kGreen, kRed, kRed, kBlue, kBlue, kGreen  
-                     #define kBBGGRR              kBlue, kBlue, kGreen, kGreen, kRed, kRed  
+                     #define kBRRGGB              (kBlue  << 0) | (kRed   << 4) | (kRed   << 8) | (kGreen << 12) | (kGreen << 16) | (kBlue  << 20)
+                     #define kGGBBRR              (kGreen << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlue  << 12) | (kRed   << 16) | (kRed   << 20)
                      
-                     #define kBRRGGB              kBlue, kRed, kRed, kGreen, kGreen, kBlue  
-                     #define kGGBBRR              kGreen, kGreen, kBlue, kBlue, kRed, kRed  
-                     
-                     #define kGBBRRG              kGreen, kBlue, kBlue, kRed, kRed, kGreen  
-                     #define kRRGGBB              kRed, kRed, kGreen, kGreen, kBlue, kBlue  
+                     #define kGBBRRG              (kGreen << 0) | (kBlue  << 4) | (kBlue  << 8) | (kRed   << 12) | (kRed   << 16) | (kGreen << 20)
+                     #define kRRGGBB              (kRed   << 0) | (kRed   << 4) | (kGreen << 8) | (kGreen << 12) | (kBlue  << 16) | (kBlue  << 20)
                      
                      /*
+                        kGRRBBG
+                        kGRRBBG
+                        kBBGGRR
+                        kBBGGRR
+
                         kBRRGGB
                         kBRRGGB
                         kGGBBRR
@@ -1059,53 +951,47 @@ void main()
                         kGBBRRG
                         kRRGGBB
                         kRRGGBB
-
-                        kGRRBBG
-                        kGRRBBG
-                        kBBGGRR
-                        kBBGGRR
                      */
+
+                     const uint rgb_mask[kBGRAxis * 2] = { kGRRBBG, kBBGGRR, kBRRGGB, kGGBBRR, kGBBRRG, kRRGGBB };
 
                      if(shadow_y < 2)
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kGRRBBG, kBRRGGB, kGBBRRG };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 0] >> (mask * 4)) & 0xF;
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kBBGGRR, kGGBBRR, kRRGGBB };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 1] >> (mask * 4)) & 0xF;
                      }
                      
-                     #undef kMaxShadowMaskSizeX 
-                     #undef kMaxShadowMaskSizeY 
-                     
                      #undef kGRRBBG           
-                     #undef kBBGGRR            
+                     #undef kBBGGRR    
                      
                      #undef kBRRGGB            
-                     #undef kGGBBRR            
+                     #undef kGGBBRR      
                      
                      #undef kGBBRRG            
-                     #undef kRRGGBB
+                     #undef kRRGGBB 
                      
                      break;
                   }
                   case k1000TVL:
                   {
-                     #define kMaxShadowMaskSizeX     6
-                     #define kMaxShadowMaskSizeY     4
+                     #define kGRRBBG              (kGreen << 0) | (kRed   << 4) | (kRed   << 8) | (kBlue  << 12) | (kBlue  << 16) | (kGreen << 20)
+                     #define kBBGGRR              (kBlue  << 0) | (kBlue  << 4) | (kGreen << 8) | (kGreen << 12) | (kRed   << 16) | (kRed   << 20)
                      
-                     #define kGRRBBG              kGreen, kRed, kRed, kBlue, kBlue, kGreen  
-                     #define kBBGGRR              kBlue, kBlue, kGreen, kGreen, kRed, kRed  
+                     #define kBRRGGB              (kBlue  << 0) | (kRed   << 4) | (kRed   << 8) | (kGreen << 12) | (kGreen << 16) | (kBlue  << 20)
+                     #define kGGBBRR              (kGreen << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlue  << 12) | (kRed   << 16) | (kRed   << 20)
                      
-                     #define kBRRGGB              kBlue, kRed, kRed, kGreen, kGreen, kBlue  
-                     #define kGGBBRR              kGreen, kGreen, kBlue, kBlue, kRed, kRed  
+                     #define kGBBRRG              (kGreen << 0) | (kBlue  << 4) | (kBlue  << 8) | (kRed   << 12) | (kRed   << 16) | (kGreen << 20)
+                     #define kRRGGBB              (kRed   << 0) | (kRed   << 4) | (kGreen << 8) | (kGreen << 12) | (kBlue  << 16) | (kBlue  << 20)
                      
-                     #define kGBBRRG              kGreen, kBlue, kBlue, kRed, kRed, kGreen  
-                     #define kRRGGBB              kRed, kRed, kGreen, kGreen, kBlue, kBlue  
-
                      /*
+                        kGRRBBG
+                        kGRRBBG
+                        kBBGGRR
+                        kBBGGRR
+
                         kBRRGGB
                         kBRRGGB
                         kGGBBRR
@@ -1115,35 +1001,27 @@ void main()
                         kGBBRRG
                         kRRGGBB
                         kRRGGBB
-
-                        kGRRBBG
-                        kGRRBBG
-                        kBBGGRR
-                        kBBGGRR
                      */
-                     
+
+                     const uint rgb_mask[kBGRAxis * 2] = { kGRRBBG, kBBGGRR, kBRRGGB, kGGBBRR, kGBBRRG, kRRGGBB };
+
                      if(shadow_y < 2)
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kGRRBBG, kBRRGGB, kGBBRRG };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 0] >> (mask * 4)) & 0xF;
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxShadowMaskSizeX] = { kBBGGRR, kGGBBRR, kRRGGBB };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxShadowMaskSizeX) + mask];
+                         colour_mask = (rgb_mask[(lcd_subpixel_layout * 2) + 1] >> (mask * 4)) & 0xF;
                      }
                      
-                     #undef kMaxShadowMaskSizeX 
-                     #undef kMaxShadowMaskSizeY 
-                     
                      #undef kGRRBBG           
-                     #undef kBBGGRR            
+                     #undef kBBGGRR    
                      
                      #undef kBRRGGB            
-                     #undef kGGBBRR            
+                     #undef kGGBBRR      
                      
                      #undef kGBBRRG            
-                     #undef kRRGGBB
+                     #undef kRRGGBB 
                      
                      break;
                   }
@@ -1182,12 +1060,9 @@ void main()
                {
                   case k300TVL:
                   {
-                     #define kMaxSlotMaskSize   4
-                     #define kMaxSlotSizeY      4 
-                     
-                     #define kRGBX       kRed, kGreen, kBlue, kBlack  
-                     #define kRBGX       kRed, kBlue, kGreen, kBlack  
-                     #define kBGRX       kBlue, kGreen, kRed, kBlack  
+                     #define kRGBX             (kRed  << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlack << 12)  
+                     #define kRBGX             (kRed  << 0) | (kBlue  << 4) | (kGreen << 8) | (kBlack << 12)  
+                     #define kBGRX             (kBlue << 0) | (kGreen << 4) | (kRed   << 8) | (kBlack << 12)  
                      
                      /*
                          kRGBX, kRGBX
@@ -1212,12 +1087,9 @@ void main()
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kRGBX, kRBGX, kBGRX };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
+                        const uint rgb_mask[kBGRAxis] = { kRGBX, kRBGX, kBGRX };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;   
                      }
-
-                     #undef kMaxSlotMaskSize  
-                     #undef kMaxSlotSizeY 
                      
                      #undef kRGBX     
                      #undef kRBGX
@@ -1227,12 +1099,9 @@ void main()
                   }
                   case k600TVL:
                   {
-                     #define kMaxSlotMaskSize   2
-                     #define kMaxSlotSizeY      4
-
-                     #define kMG         kMagenta, kGreen  
-                     #define kYB         kYellow, kBlue  
-                     #define kGM         kGreen, kMagenta  
+                     #define kMG               (kMagenta << 0) | (kGreen   << 6)  
+                     #define kYB               (kYellow  << 0) | (kBlue    << 6)
+                     #define kGM               (kGreen   << 0) | (kMagenta << 6)
                      
                      /*
                         kMG, kMG
@@ -1257,12 +1126,9 @@ void main()
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kMG, kYB, kGM };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
+                        const uint rgb_mask[kBGRAxis] = { kMG, kYB, kGM };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 6)) & 0x3F;
                      }
-                     
-                     #undef kMaxSlotMaskSize  
-                     #undef kMaxSlotSizeY     
                    
                      #undef kMG     
                      #undef kYB  
@@ -1348,12 +1214,9 @@ void main()
                {
                   case k300TVL:
                   { 
-                     #define kMaxSlotMaskSize   7
-                     #define kMaxSlotSizeY      8
-                     
-                     #define kRRGGBBX    kRed, kRed, kGreen, kGreen, kBlue, kBlue, kBlack  
-                     #define kRRBBGGX    kRed, kRed, kBlue, kBlue, kGreen, kGreen, kBlack  
-                     #define kBBGGRRX    kBlue, kBlue, kGreen, kGreen, kRed, kRed, kBlack  
+                     #define kRRGGBBX          (kRed  << 0) | (kRed  << 4) | (kGreen << 8) | (kGreen << 12) | (kBlue  << 16) | (kBlue  << 20) | (kBlack << 24)   
+                     #define kRRBBGGX          (kRed  << 0) | (kRed  << 4) | (kBlue  << 8) | (kBlue  << 12) | (kGreen << 16) | (kGreen << 20) | (kBlack << 24)    
+                     #define kBBGGRRX          (kBlue << 0) | (kBlue << 4) | (kGreen << 8) | (kGreen << 12) | (kRed   << 16) | (kRed   << 20) | (kBlack << 24)    
                      
                      /*
                          kRRGGBBX, kRRGGBBX
@@ -1390,12 +1253,9 @@ void main()
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kRRGGBBX, kRRBBGGX, kBBGGRRX };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
+                        const uint rgb_mask[kBGRAxis] = {  kRRGGBBX, kRRBBGGX, kBBGGRRX };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;  
                      }
-
-                     #undef kMaxSlotMaskSize   
-                     #undef kMaxSlotSizeY   
                      
                      #undef kRRGGBBX  
                      #undef kRRBBGGX  
@@ -1405,35 +1265,25 @@ void main()
                   }
                   case k600TVL:
                   {
-                     // 600 TVL
-                     #define kMaxSlotMaskSize   4
-                     #define kMaxSlotSizeY      6
-
-                     #define kRGBX       kRed, kGreen, kBlue, kBlack  
-                     #define kRBGX       kRed, kBlue, kGreen, kBlack  
-                     #define kBGRX       kBlue, kGreen, kRed, kBlack  
-
+                     #define kRGBX             (kRed  << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlack << 12)  
+                     #define kRBGX             (kRed  << 0) | (kBlue  << 4) | (kGreen << 8) | (kBlack << 12)  
+                     #define kBGRX             (kBlue << 0) | (kGreen << 4) | (kRed   << 8) | (kBlack << 12)  
+                     
                      /*
-                         kRGBX, kRGBX
                          kRGBX, kRGBX
                          kRGBX, kXXXX
                          kRGBX, kRGBX
-                         kRGBX, kRGBX
-                         kXXXX, kRGBX   
+                         kXXXX, kRGBX
 
-                         kRBGX, kRBGX
                          kRBGX, kRBGX
                          kRBGX, kXXXX
                          kRBGX, kRBGX
-                         kRBGX, kRBGX
-                         kXXXX, kRBGX   
-                     
-                         kBGRX, kBGRX
+                         kXXXX, kRBGX  
+
                          kBGRX, kBGRX
                          kBGRX, kXXXX
                          kBGRX, kBGRX
-                         kBGRX, kBGRX
-                         kXXXX, kBGRX 
+                         kXXXX, kBGRX
                      */
 
                      if((element == 5) || (element == 10))
@@ -1442,27 +1292,21 @@ void main()
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kRGBX, kRBGX, kBGRX };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
+                        const uint rgb_mask[kBGRAxis] = { kRGBX, kRBGX, kBGRX };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;   
                      }
-
-                     #undef kMaxSlotMaskSize   
-                     #undef kMaxSlotSizeY   
-
+                     
                      #undef kRGBX     
                      #undef kRBGX
-                     #undef kBGRX 
+                     #undef kBGRX
 
                      break;
                   }
                   case k800TVL:
                   {
-                     #define kMaxSlotMaskSize   3
-                     #define kMaxSlotSizeY      4
-                     
-                     #define kBGR        kBlue, kGreen, kRed  
-                     #define kGBR        kGreen, kBlue, kRed  
-                     #define kRGB        kRed, kGreen, kBlue  
+                     #define kBGR              (kBlue  << 0) | (kGreen << 4) | (kRed  << 8) 
+                     #define kGBR              (kGreen << 0) | (kBlue  << 4) | (kRed  << 8)  
+                     #define kRGB              (kRed   << 0) | (kGreen << 4) | (kBlue << 8)   
                      
                      /*
                         kBGR, kBGR
@@ -1487,12 +1331,9 @@ void main()
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kBGR, kGBR, kRGB };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
-                     }
-
-                     #undef kMaxSlotMaskSize   
-                     #undef kMaxSlotSizeY   
+                        const uint rgb_mask[kBGRAxis] = { kBGR, kGBR, kRGB };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;  
+                     }  
                      
                      #undef kBGR    
                      #undef kGBR 
@@ -1502,43 +1343,37 @@ void main()
                   }
                   case k1000TVL:
                   {
-                     #define kMaxSlotMaskSize   2
-                     #define kMaxSlotSizeY      4
-                     
-                     #define kMG         kMagenta, kGreen  
-                     #define kYB         kYellow, kBlue  
-                     #define kGM         kGreen, kMagenta  
+                     #define kMG               (kMagenta << 0) | (kGreen   << 6)  
+                     #define kYB               (kYellow  << 0) | (kBlue    << 6)
+                     #define kGM               (kGreen   << 0) | (kMagenta << 6)
                      
                      /*
-                         kMG, kMG
-                         kMG, kXX
-                         kMG, kMG
-                         kXX, kMG
+                        kMG, kMG
+                        kMG, kXX
+                        kMG, kMG
+                        kXX, kMG
 
-                         kYB, kYB
-                         kYB, kXX
-                         kYB, kYB
-                         kXX, kYB
+                        kYB, kYB
+                        kYB, kXX
+                        kYB, kYB
+                        kXX, kYB
 
-                         kGM, kGM
-                         kGM, kXX
-                         kGM, kGM
-                         kXX, kGM
+                        kGM, kGM
+                        kGM, kXX
+                        kGM, kGM
+                        kXX, kGM
                      */
-                     
+
                      if((element == 3) || (element == 6))
                      {
                         colour_mask = kBlack;
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kMG, kYB, kGM };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
+                        const uint rgb_mask[kBGRAxis] = { kMG, kYB, kGM };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 6)) & 0x3F;
                      }
-                     
-                     #undef kMaxSlotMaskSize   
-                     #undef kMaxSlotSizeY   
-                     
+                   
                      #undef kMG     
                      #undef kYB  
                      #undef kGM        
@@ -1559,12 +1394,9 @@ void main()
                {
                   case k300TVL:
                   { 
-                     #define kMaxSlotMaskSize   7
-                     #define kMaxSlotSizeY      6
-                   
-                     #define kRRGGBBX    kRed, kRed, kGreen, kGreen, kBlue, kBlue, kBlack  
-                     #define kRRBBGGX    kRed, kRed, kBlue, kBlue, kGreen, kGreen, kBlack  
-                     #define kBBGGRRX    kBlue, kBlue, kGreen, kGreen, kRed, kRed, kBlack  
+                     #define kRRGGBBX          (kRed  << 0) | (kRed  << 4) | (kGreen << 8) | (kGreen << 12) | (kBlue  << 16) | (kBlue  << 20) | (kBlack << 24)   
+                     #define kRRBBGGX          (kRed  << 0) | (kRed  << 4) | (kBlue  << 8) | (kBlue  << 12) | (kGreen << 16) | (kGreen << 20) | (kBlack << 24)    
+                     #define kBBGGRRX          (kBlue << 0) | (kBlue << 4) | (kGreen << 8) | (kGreen << 12) | (kRed   << 16) | (kRed   << 20) | (kBlack << 24) 
                      
                      /*
                          kRRGGBBX, kRRGGBBX
@@ -1595,12 +1427,9 @@ void main()
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kRRGGBBX, kRRBBGGX, kBBGGRRX };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
-                     }
-
-                     #undef kMaxSlotMaskSize  
-                     #undef kMaxSlotSizeY        
+                        const uint rgb_mask[kBGRAxis] = {  kRRGGBBX, kRRBBGGX, kBBGGRRX };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF; 
+                     }   
                      
                      #undef kRRGGBBX  
                      #undef kRRBBGGX  
@@ -1610,12 +1439,9 @@ void main()
                   }
                   case k600TVL:
                   {
-                     #define kMaxSlotMaskSize   7
-                     #define kMaxSlotSizeY      6
-                    
-                     #define kRRGGBBX    kRed, kRed, kGreen, kGreen, kBlue, kBlue, kBlack  
-                     #define kRRBBGGX    kRed, kRed, kBlue, kBlue, kGreen, kGreen, kBlack  
-                     #define kBBGGRRX    kBlue, kBlue, kGreen, kGreen, kRed, kRed, kBlack  
+                     #define kRRGGBBX          (kRed  << 0) | (kRed  << 4) | (kGreen << 8) | (kGreen << 12) | (kBlue  << 16) | (kBlue  << 20) | (kBlack << 24)   
+                     #define kRRBBGGX          (kRed  << 0) | (kRed  << 4) | (kBlue  << 8) | (kBlue  << 12) | (kGreen << 16) | (kGreen << 20) | (kBlack << 24)    
+                     #define kBBGGRRX          (kBlue << 0) | (kBlue << 4) | (kGreen << 8) | (kGreen << 12) | (kRed   << 16) | (kRed   << 20) | (kBlack << 24) 
                      
                      /*
                          kRRGGBBX, kRRGGBBX
@@ -1646,8 +1472,8 @@ void main()
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kRRGGBBX, kRRBBGGX, kBBGGRRX };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
+                        const uint rgb_mask[kBGRAxis] = {  kRRGGBBX, kRRBBGGX, kBBGGRRX };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF; 
                      }
 
                      #undef kMaxSlotMaskSize   
@@ -1661,12 +1487,9 @@ void main()
                   }
                   case k800TVL:
                   {
-                     #define kMaxSlotMaskSize   5
-                     #define kMaxSlotSizeY      4
-                     
-                     #define kRYCBX      kRed, kYellow, kCyan, kBlue, kBlack  
-                     #define kRMCGX      kRed, kMagenta, kCyan, kGreen, kBlack  
-                     #define kBCYRX      kBlue, kCyan, kYellow, kRed, kBlack  
+                     #define kRYCBX            (kRed  << 0) | (kYellow  << 6) | (kCyan   << 12) | (kBlue  << 18) | (kBlack << 24)  
+                     #define kRMCGX            (kRed  << 0) | (kMagenta << 6) | (kCyan   << 12) | (kGreen << 18) | (kBlack << 24)  
+                     #define kBCYRX            (kBlue << 0) | (kCyan    << 6) | (kYellow << 12) | (kRed   << 18) | (kBlack << 24)  
                      
                      /*
                         kRYCBX, kRYCBX
@@ -1691,12 +1514,9 @@ void main()
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kRYCBX, kRMCGX, kBCYRX };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
+                        const uint rgb_mask[kBGRAxis] = { kRYCBX, kRMCGX, kBCYRX  };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 6)) & 0x3F;
                      }
-                     
-                     #undef kMaxSlotMaskSize   
-                     #undef kMaxSlotSizeY   
                      
                      #undef kRYCBX    
                      #undef kRMCGX
@@ -1706,46 +1526,40 @@ void main()
                   }
                   case k1000TVL:
                   {
-                     #define kMaxSlotMaskSize   4
-                     #define kMaxSlotSizeY      4 
-                     
-                     #define kRGBX       kRed, kGreen, kBlue, kBlack  
-                     #define kRBGX       kRed, kBlue, kGreen, kBlack  
-                     #define kBGRX       kBlue, kGreen, kRed, kBlack  
+                     #define kRGBX             (kRed  << 0) | (kGreen << 4) | (kBlue  << 8) | (kBlack << 12)  
+                     #define kRBGX             (kRed  << 0) | (kBlue  << 4) | (kGreen << 8) | (kBlack << 12)  
+                     #define kBGRX             (kBlue << 0) | (kGreen << 4) | (kRed   << 8) | (kBlack << 12)  
                      
                      /*
-                        kRGBX, kRGBX
-                        kRGBX, kXXXX
-                        kRGBX, kRGBX
-                        kXXXX, kRGBX
-                     
-                        kRBGX, kRBGX
-                        kRBGX, kXXXX
-                        kRBGX, kRBGX
-                        kXXXX, kRBGX
+                         kRGBX, kRGBX
+                         kRGBX, kXXXX
+                         kRGBX, kRGBX
+                         kXXXX, kRGBX
 
-                        kBGRX, kBGRX
-                        kBGRX, kXXXX
-                        kBGRX, kBGRX
-                        kXXXX, kBGRX
+                         kRBGX, kRBGX
+                         kRBGX, kXXXX
+                         kRBGX, kRBGX
+                         kXXXX, kRBGX  
+
+                         kBGRX, kBGRX
+                         kBGRX, kXXXX
+                         kBGRX, kBGRX
+                         kXXXX, kBGRX
                      */
-                     
-                     if((element == 3) || (element == 6))
+
+                     if((element == 5) || (element == 10))
                      {
                         colour_mask = kBlack;
                      }
                      else
                      {
-                        const uint rgb_mask[kBGRAxis * kMaxSlotMaskSize] = { kRGBX, kRBGX, kBGRX };
-                        colour_mask = rgb_mask[(lcd_subpixel_layout * kMaxSlotMaskSize) + mask];
+                        const uint rgb_mask[kBGRAxis] = { kRGBX, kRBGX, kBGRX };
+                        colour_mask = (rgb_mask[lcd_subpixel_layout] >> (mask * 4)) & 0xF;   
                      }
                      
-                     #undef kMaxSlotMaskSize   
-                     #undef kMaxSlotSizeY
-                     
-                     #undef kRGBX    
-                     #undef kRBGX  
-                     #undef kBGRX  
+                     #undef kRGBX     
+                     #undef kRBGX
+                     #undef kBGRX
 
                      break;
                   }
