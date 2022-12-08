@@ -64,8 +64,8 @@ vec3 srgb_linear(vec3 x) {
 #endif
 }
 
-vec3 linear_to_sRGB(vec3 color, float gamma){
-
+vec3 linear_to_sRGB(vec3 color, float gamma)
+{
     color = clamp(color, 0.0, 1.0);
     color.r = (color.r <= 0.00313066844250063) ?
     color.r * 12.92 : 1.055 * pow(color.r, 1.0 / gamma) - 0.055;
@@ -77,8 +77,8 @@ vec3 linear_to_sRGB(vec3 color, float gamma){
     return color.rgb;
 }
 
-vec3 sRGB_to_linear(vec3 color, float gamma){
-
+vec3 sRGB_to_linear(vec3 color, float gamma)
+{
     color = clamp(color, 0.0, 1.0);
     color.r = (color.r <= 0.04045) ?
     color.r / 12.92 : pow((color.r + 0.055) / (1.055), gamma);
@@ -90,117 +90,165 @@ vec3 sRGB_to_linear(vec3 color, float gamma){
     return color.rgb;
 }
 
-//Conversion matrices
+/*------------------------------------------------------------------------------
+                       [RGB TO GRAYSCALE / LUMA CODE SECTION]
+------------------------------------------------------------------------------*/
+
+// if you're already in linear gamma, definitely use this one ( Y = 0.2126R + 0.7152G + 0.0722B )
+// the Rec. 709 spec uses these same coefficients but with gamma-compressed components ( Y' = 0.2126R' + 0.7152G' + 0.0722B' )
+float luma(vec3 color)
+{
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// for digital formats following CCIR 601 (that is, most digital standard def formats)
+// expects gamma-compressed components and doesn't look very good
+// ( Y' = 0.299R' + 0.587G' + 0.114B' )
+float luma_CCIR601(vec3 color)
+{
+    return dot(color, vec3(0.299, 0.587, 0.114));
+}
+
+// SMPTE 240M; used by some transitional 1035i HDTV signals. Expects gamma-compressed components
+// ( Y' = 0.212R' + 0.701G' + 0.087B' )
+float luma_240M(vec3 color)
+{
+    return dot(color, vec3(0.212, 0.701, 0.087));
+}
+
+// Same as Rec. 709 but with quick-and-dirty gamma linearization added on top
+float luma_gamma(vec3 color)
+{
+    color = color * color;
+    float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    return sqrt(luma);
+}
+
+/*------------------------------------------------------------------------------
+                       [COLORSPACE CONVERSION CODE SECTION]
+------------------------------------------------------------------------------*/
+
+/* XYZ color space is a device-invariant representation that encompasses all color sensations that are visible to a person
+with average eyesight. Y is the luminance, Z is quasi-equal to blue and X is a mix of the three CIE RGB curves chosen to be non-negative */
+
 vec3 RGBtoXYZ(vec3 RGB)
-  {
-      const mat3x3 m = mat3x3(
-      0.6068909, 0.1735011, 0.2003480,
-      0.2989164, 0.5865990, 0.1144845,
-      0.0000000, 0.0660957, 1.1162243);
-  
+{
+    const mat3x3 m = mat3x3(
+        0.6068909, 0.1735011, 0.2003480,
+        0.2989164, 0.5865990, 0.1144845,
+        0.0000000, 0.0660957, 1.1162243);
     return RGB * m;
-  }
+}
   
 vec3 XYZtoRGB(vec3 XYZ)
-  {
-      const mat3x3 m = mat3x3(
-      1.9099961, -0.5324542, -0.2882091,
-     -0.9846663,  1.9991710, -0.0283082,
-      0.0583056, -0.1183781,  0.8975535);
-  
+{
+    const mat3x3 m = mat3x3(
+        1.9099961, -0.5324542, -0.2882091,
+        -0.9846663,  1.9991710, -0.0283082,
+        0.0583056, -0.1183781,  0.8975535); 
     return XYZ * m;
 }
 
 vec3 XYZtoSRGB(vec3 XYZ)
 {
     const mat3x3 m = mat3x3(
-    3.2404542,-1.5371385,-0.4985314,
-   -0.9692660, 1.8760108, 0.0415560,
-    0.0556434,-0.2040259, 1.0572252);
-
+        3.2404542,-1.5371385,-0.4985314,
+        -0.9692660, 1.8760108, 0.0415560,
+        0.0556434,-0.2040259, 1.0572252);
     return XYZ * m;
-  }
+}
+
+/* YUV is a color space that takes human perception into account, allowing reduced bandwidth for chrominance components,
+as compared with a direct RGB representation. It includes a luminance component, Y, with nonlinear perceptual brightness,
+and two color components, U and V. This colorspace was used in the PAL color broadcast standard and is the counterpart to
+NTSC's YIQ colorspace. It is still commonly used to describe YCbCr signals. */
   
 vec3 RGBtoYUV(vec3 RGB)
- {
-     const mat3x3 m = mat3x3(
-     0.2126, 0.7152, 0.0722,
-    -0.09991,-0.33609, 0.436,
-     0.615, -0.55861, -0.05639);
- 
-     return RGB * m;
- }
+{
+    const mat3x3 m = mat3x3(
+        0.2126, 0.7152, 0.0722,
+        -0.09991,-0.33609, 0.436,
+        0.615, -0.55861, -0.05639);
+    return RGB * m;
+}
  
 vec3 YUVtoRGB(vec3 YUV)
- {
-     const mat3x3 m = mat3x3(
-     1.000, 0.000, 1.28033,
-     1.000,-0.21482,-0.38059,
-     1.000, 2.12798, 0.000);
- 
-      return YUV * m;
-  }
+{
+    const mat3x3 m = mat3x3(
+        1.000, 0.000, 1.28033,
+        1.000,-0.21482,-0.38059,
+        1.000, 2.12798, 0.000);
+    return YUV * m;
+}
+
+/* YIQ is the color space used for analog NTSC color broadcasts, whereby Y stands for luma, I stands for in-phase and 
+Q stands for quadrature, referring to the components used in quadrature amplitude modulation. The IQ axes exist on the
+same plane as the UV axes from the YUV color space, just rotated 33 degrees. */
 
 vec3 RGBtoYIQ(vec3 RGB)
-  {
-     const mat3x3 m = mat3x3(
-     0.2989, 0.5870, 0.1140,
-     0.5959, -0.2744, -0.3216,
-     0.2115, -0.5229, 0.3114);
-     return RGB * m;
-  }
+{
+    const mat3x3 m = mat3x3(
+        0.2989, 0.5870, 0.1140,
+        0.5959, -0.2744, -0.3216,
+        0.2115, -0.5229, 0.3114);
+    return RGB * m;
+}
 
 vec3 YIQtoRGB(vec3 YIQ)
-  {
-     const mat3x3 m = mat3x3(
-     1.0, 0.956, 0.6210,
-     1.0, -0.2720, -0.6474,
-     1.0, -1.1060, 1.7046);
-   return YIQ * m;
-  }
+{
+    const mat3x3 m = mat3x3(
+        1.0, 0.956, 0.6210,
+        1.0, -0.2720, -0.6474,
+        1.0, -1.1060, 1.7046);
+    return YIQ * m;
+}
   
 vec3 XYZtoYxy(vec3 XYZ)
-  {
+{
     float w = (XYZ.r + XYZ.g + XYZ.b);
-      vec3 Yxy;
+    vec3 Yxy;
     Yxy.r = XYZ.g;
     Yxy.g = XYZ.r / w;
     Yxy.b = XYZ.g / w;
   
-      return Yxy;
-  }
+    return Yxy;
+}
   
 vec3 YxytoXYZ(vec3 Yxy)
-  {
+{
     vec3 XYZ;
     XYZ.g = Yxy.r;
     XYZ.r = Yxy.r * Yxy.g / Yxy.b;
     XYZ.b = Yxy.r * (1.0 - Yxy.g - Yxy.b) / Yxy.b;
   
     return XYZ;
-  }
-  
+}
+
+/* CMYK--aka process color or four color--is a subtractive color model based on the CMY color model that is
+used in color printing and to describe the printing process itself. C is for Cyan, M is for Magenta, Y is for
+Yellow and K is for 'key' or black. */
+
 // RGB <-> CMYK conversions require 4 channels
 vec4 RGBtoCMYK(vec3 RGB){
-	float Red     = RGB.r;
-	float Green   = RGB.g;
-	float Blue    = RGB.b;
-	float Black   = min(1.0 - Red, min(1.0 - Green, 1.0 - Blue));
-	float Cyan    =    (1.0 - Red   - Black) / (1.0 - Black);
-	float Magenta =    (1.0 - Green - Black) / (1.0 - Black);
-	float Yellow  =    (1.0 - Blue  - Black) / (1.0 - Black);
-	return vec4(Cyan, Magenta, Yellow, Black);
+    float Red     = RGB.r;
+    float Green   = RGB.g;
+    float Blue    = RGB.b;
+    float Black   = min(1.0 - Red, min(1.0 - Green, 1.0 - Blue));
+    float Cyan    =    (1.0 - Red   - Black) / (1.0 - Black);
+    float Magenta =    (1.0 - Green - Black) / (1.0 - Black);
+    float Yellow  =    (1.0 - Blue  - Black) / (1.0 - Black);
+    return vec4(Cyan, Magenta, Yellow, Black);
 }
  
 vec3 CMYKtoRGB(vec4 CMYK){
-	float Cyan    = CMYK.x;
-	float Magenta = CMYK.y;
-	float Yellow  = CMYK.z;
-	float Black   = CMYK.w;
-	float Red     = 1.0 - min(1.0, Cyan    * (1.0 - Black) + Black);
-	float Green   = 1.0 - min(1.0, Magenta * (1.0 - Black) + Black);
-	float Blue    = 1.0 - min(1.0, Yellow  * (1.0 - Black) + Black);
-	return vec3(Red, Green, Blue);
+    float Cyan    = CMYK.x;
+    float Magenta = CMYK.y;
+    float Yellow  = CMYK.z;
+    float Black   = CMYK.w;
+    float Red     = 1.0 - min(1.0, Cyan    * (1.0 - Black) + Black);
+    float Green   = 1.0 - min(1.0, Magenta * (1.0 - Black) + Black);
+    float Blue    = 1.0 - min(1.0, Yellow  * (1.0 - Black) + Black);
+    return vec3(Red, Green, Blue);
 }
   
 // Converting pure hue to RGB
@@ -291,20 +339,27 @@ const vec3 D9000KDS = vec3(0.90354,1.00000,1.31190);//8939K, 0.0114 Duv
 //}
  
 //  ---  sRGB  ---  //
-vec3 XYZ_to_sRGB(vec3 x) {
+vec3 XYZ_to_sRGB(vec3 x)
+{
     x = x * mat3x3( 3.2404542, -1.5371385, -0.4985314, -0.9692660, 1.8760108, 0.0415560, 0.0556434, -0.2040259, 1.0572252 );
     x = mix(1.055*pow(x, vec3(1./2.4)) - 0.055, 12.92*x, step(x,vec3(0.0031308)));
     return x;
 }
  
-vec3 sRGB_to_XYZ(vec3 x) {
+vec3 sRGB_to_XYZ(vec3 x)
+{
     x = mix(pow((x + 0.055)/1.055,vec3(2.4)), x / 12.92, step(x,vec3(0.04045)));
     x = x * mat3x3( 0.4124564, 0.3575761, 0.1804375, 0.2126729, 0.7151522, 0.0721750, 0.0193339, 0.1191920, 0.9503041 );
     return x;
 }
  
-//  ---  Jzazbz  ---  //{
-vec3 XYZ_to_Jzazbz(vec3 XYZ) {
+/* Jzazbz is a color space designed for perceptual uniformity in high dynamic range (HDR) and wide color gamut (WCG) applications.
+It is conceptually similar to CIE Lab but is considered more "modern". As compared with Lab, perceptual color differences are
+predicted by Euclidean distance, it is more perceptually uniform and changes in saturation or lightness produce less shifts in hue
+(i.e., increased hue linearity). Jzazbz and JzCzhz are used by ImageMagick and not much else. */
+
+vec3 XYZ_to_Jzazbz(vec3 XYZ)
+{
     float b = 1.15;
     float g = 0.66;
     vec3 XYZprime = XYZ;
@@ -324,16 +379,20 @@ vec3 XYZ_to_Jzazbz(vec3 XYZ) {
     vec3 Jzazbz = Izazbz;
     Jzazbz.x = ((1 + d) * Izazbz.x)/(1 + d * Izazbz.x) - d0;
     return Jzazbz;
-}    
+}
+
+/* The polar version of Jzazbz */
  
-vec3 Jzazbz_to_JzCzhz(vec3 Jzazbz) {
+vec3 Jzazbz_to_JzCzhz(vec3 Jzazbz)
+{
     float Cz = sqrt(Jzazbz.y*Jzazbz.y + Jzazbz.z*Jzazbz.z);
     float hz = atan(Jzazbz.z,Jzazbz.y);
     vec3 JzCzhz = vec3(Jzazbz.x,Cz,hz);
     return JzCzhz;
 }
  
-vec3 JzCzhz_Normalize(vec3 JzCzhz) {
+vec3 JzCzhz_Normalize(vec3 JzCzhz)
+{
     JzCzhz.x = JzCzhz.x*56.91964;
     JzCzhz.y = JzCzhz.y*40.05235;
     JzCzhz.z = (JzCzhz.z+2.761)/5.522;
@@ -343,19 +402,22 @@ vec3 JzCzhz_Normalize(vec3 JzCzhz) {
     return JzCzhz;
 }
  
-vec3 JzCzhz_Denormalize(vec3 JzCzhz) {
+vec3 JzCzhz_Denormalize(vec3 JzCzhz)
+{
     JzCzhz.x = JzCzhz.x/56.91964;
     JzCzhz.y = JzCzhz.y/40.05235;
     JzCzhz.z = JzCzhz.z * 5.522 - 2.761;
     return JzCzhz;
 }
  
-vec3 JzCzhz_to_Jzazbz(vec3 JzCzhz) {
+vec3 JzCzhz_to_Jzazbz(vec3 JzCzhz)
+{
     vec3 Jzazbz = vec3(JzCzhz.x,JzCzhz.y*cos(JzCzhz.z),JzCzhz.y*sin(JzCzhz.z));;
     return Jzazbz;
 }
  
-vec3 Jzazbz_to_XYZ(vec3 Jzazbz) {
+vec3 Jzazbz_to_XYZ(vec3 Jzazbz)
+{
     float d0 = 1.6295499532821566 * pow(10.0,-11.0);
     float d = -0.56;
     float Iz = (Jzazbz.x + d0) / (1 + d - d * (Jzazbz.x + d0));
