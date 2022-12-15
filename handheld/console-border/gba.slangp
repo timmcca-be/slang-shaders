@@ -6,17 +6,15 @@ filter_linear0 = false
 shader1 = "../shaders/color/gba-color.slang"
 filter_linear1 = false
 
-shader2 = "../shaders/lcd-cgwg/lcd-grid.slang"
+shader2 = "shader-files/lcd-cgwg/lcd-grid.slang"
 filter_linear2 = "false"
-wrap_mode2 = "clamp_to_border"
-scale_type2 = "source"
-scale2 = "4.0"
+scale_type2 = "viewport"
 
-shader3 = "shader-files/border-auto-scale.slang"
+shader3 = "shader-files/gb-pass-5.slang"
 filter_linear3 = "true"
-wrap_mode3 = "clamp_to_border"
 
-parameters = "GRID_STRENGTH;mixfactor"
+parameters = "video_scale;GRID_STRENGTH;mixfactor"
+video_scale = 4.0
 GRID_STRENGTH = "0.150000"
 mixfactor = "0.50"
 

@@ -1,14 +1,14 @@
 shaders = "2"
 
-shader0 = "../shaders/lcd-cgwg/lcd-grid.slang"
+shader0 = "shader-files/lcd-cgwg/lcd-grid.slang"
 filter_linear0 = "false"
-wrap_mode0 = "clamp_to_border"
-scale_type0 = "source"
-scale0 = "4.0"
+scale_type0 = "viewport"
 
-shader1 = "shader-files/border-auto-scale.slang"
+shader1 = "shader-files/gb-pass-5.slang"
 filter_linear1 = "true"
-wrap_mode1 = "clamp_to_border"
+
+parameters = "video_scale"
+video_scale = 4.0
 
 textures = "BORDER"
 BORDER = "resources/color-border-square-4x.png"
