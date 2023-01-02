@@ -50,7 +50,7 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 
 void main()
 {
-   vec3 Color;
+   vec3 Color = vec3(0.0);
 
    float count = -0.005 / params.Hsharpness;
    float limit = 0.005 / params.Hsharpness;
