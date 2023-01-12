@@ -46,9 +46,20 @@
 // * do so, delete this exception statement from your version.                *
 // ****************************************************************************
 
-#define BLEND_NONE 0
-#define BLEND_NORMAL 1
-#define BLEND_DOMINANT 2
+layout(push_constant) uniform Push
+{
+	vec4 SourceSize;
+	vec4 OutputSize;
+	float blend_none, blend_normal, blend_dominant;
+} params;
+
+#pragma parameter blend_none "Blend None" 0.0 0.0 2.0 1.0
+#pragma parameter blend_normal "Blend Normal" 1.0 0.0 2.0 1.0
+#pragma parameter blend_dominant "Blend Dominant" 2.0 0.0 2.0 1.0
+
+#define BLEND_NONE int(params.blend_none)
+#define BLEND_NORMAL int(params.blend_normal)
+#define BLEND_DOMINANT int(params.blend_dominant)
 #define LUMINANCE_WEIGHT 1.0
 #define EQUAL_COLOR_TOLERANCE 30.0/255.0
 #define STEEP_DIRECTION_THRESHOLD 2.2
@@ -84,12 +95,6 @@ float get_left_ratio(vec2 center, vec2 origin, vec2 direction, vec2 scale)
 //  return step(0, v);
   return smoothstep(-sqrt(2.0)/2.0, sqrt(2.0)/2.0, v);
 }
-
-layout(push_constant) uniform Push
-{
-	vec4 SourceSize;
-	vec4 OutputSize;
-} params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
 {
