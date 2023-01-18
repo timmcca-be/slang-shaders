@@ -33,7 +33,7 @@ layout(push_constant) uniform Push
    float hcrt_max_nits;
    float hcrt_paper_white_nits;
    float hcrt_expand_gamut;
-   float hcrt_gamma_out;
+   
    float hcrt_colour_accurate;
 
    float hcrt_lcd_resolution;
@@ -79,6 +79,12 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	vec4 OutputSize;
 	uint FrameCount;
 
+   float hcrt_r709_gamma_out;
+   float hcrt_srgb_gamma_out;
+   float hcrt_p3_gamma_out;
+   float hcrt_r709_gamma_cutoff;
+   float hcrt_srgb_gamma_cutoff;
+
    float hcrt_h_size;
    float hcrt_v_size;
    float hcrt_h_cent;
@@ -94,7 +100,11 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #define HCRT_MAX_NITS                        params.hcrt_max_nits
 #define HCRT_PAPER_WHITE_NITS                params.hcrt_paper_white_nits
 #define HCRT_EXPAND_GAMUT                    params.hcrt_expand_gamut
-#define HCRT_GAMMA_OUT                       params.hcrt_gamma_out
+#define HCRT_R709_GAMMA_OUT                  global.hcrt_r709_gamma_out
+#define HCRT_SRGB_GAMMA_OUT                  global.hcrt_srgb_gamma_out
+#define HCRT_P3_GAMMA_OUT                    global.hcrt_p3_gamma_out
+#define HCRT_R709_GAMMA_CUTOFF               global.hcrt_r709_gamma_cutoff
+#define HCRT_SRGB_GAMMA_CUTOFF               global.hcrt_srgb_gamma_cutoff
 #define HCRT_COLOUR_ACCURATE                 params.hcrt_colour_accurate
 
 #define HCRT_LCD_RESOLUTION                  params.hcrt_lcd_resolution 
