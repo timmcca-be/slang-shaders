@@ -34,7 +34,7 @@ const mat3 kXYZ_to_DCIP3 = mat3 (
 
 const mat3 kColourGamut[kColourSystems] = { k709_to_XYZ, kPAL_to_XYZ, kNTSC_to_XYZ, kNTSC_to_XYZ };
 
-const float kTemperatures[kColourSystems] = { kD65, kD65, kD65, kD93 }; 
+//const float kTemperatures[kColourSystems] = { kD65, kD65, kD65, kD93 }; 
 
   // Values from: http://blenderartists.org/forum/showthread.php?270332-OSL-Goodness&p=2268693&viewfull=1#post2268693   
 const mat3 kWarmTemperature = mat3(
@@ -71,29 +71,15 @@ vec3 WhiteBalance(float temperature, vec3 colour)
    return result;
 }
 
-float r601ToLinear_1(const float channel)
+float r601r709ToLinear_1(const float channel)
 {
 	//return (channel >= 0.081f) ? pow((channel + 0.099f) * (1.0f / 1.099f), (1.0f / 0.45f)) : channel * (1.0f / 4.5f);
-	//return (channel >= 0.081f) ? pow((channel + 0.099f) * (1.0f / 1.099f), HCRT_GAMMA_IN) : channel * (1.0f / 4.5f);
-   return pow((channel + 0.099f) * (1.0f / 1.099f), HCRT_GAMMA_IN);
+	return (channel >= (HCRT_GAMMA_CUTOFF * (1.0f / 1000.0f))) ? pow((channel + 0.099f) * (1.0f / 1.099f), HCRT_GAMMA_IN) : channel * (1.0f / 4.5f);
 }
 
-vec3 r601ToLinear(const vec3 colour)
+vec3 r601r709ToLinear(const vec3 colour)
 {
-	return vec3(r601ToLinear_1(colour.r), r601ToLinear_1(colour.g), r601ToLinear_1(colour.b));
-}
-
-
-float r709ToLinear_1(const float channel)
-{
-	//return (channel >= 0.081f) ? pow((channel + 0.099f) * (1.0f / 1.099f), (1.0f / 0.45f)) : channel * (1.0f / 4.5f);
-	//return (channel >= 0.081f) ? pow((channel + 0.099f) * (1.0f / 1.099f), HCRT_GAMMA_IN) : channel * (1.0f / 4.5f);
-   return pow((channel + 0.099f) * (1.0f / 1.099f), HCRT_GAMMA_IN);
-}
-
-vec3 r709ToLinear(const vec3 colour)
-{
-	return vec3(r709ToLinear_1(colour.r), r709ToLinear_1(colour.g), r709ToLinear_1(colour.b));
+	return vec3(r601r709ToLinear_1(colour.r), r601r709ToLinear_1(colour.g), r601r709ToLinear_1(colour.b));
 }
 
 // XYZ Yxy transforms found in Dogway's Grade.slang shader
@@ -175,9 +161,11 @@ vec3 ColourGrade(const vec3 colour)
 {
    const uint colour_system   = uint(HCRT_CRT_COLOUR_SYSTEM);
 
-   const vec3 white_point     = WhiteBalance(kTemperatures[colour_system] + HCRT_WHITE_TEMPERATURE, colour);
+   const float temperature[kColourSystems] = { HCRT_WHITE_TEMPERATURE_D65, HCRT_WHITE_TEMPERATURE_D65, HCRT_WHITE_TEMPERATURE_D65, HCRT_WHITE_TEMPERATURE_D93 };
 
-   const vec3 linear          = r601ToLinear(white_point); //pow(white_point, vec3(HCRT_GAMMA_IN));
+   const vec3 white_point     = WhiteBalance(temperature[colour_system], colour);
+
+   const vec3 linear          = r601r709ToLinear(white_point); //pow(white_point, vec3(HCRT_GAMMA_IN));
 
    const vec3 xyz             = linear * kColourGamut[colour_system];
 
