@@ -1,9 +1,9 @@
 #version 450
 
 /*
-    crt-1tap v1.0 by fishku
+    crt-1tap v1.1 by fishku
     Copyright (C) 2023
-    Public domain license
+    Public domain license (CC0)
 
     Extremely fast and lightweight dynamic scanline shader.
     Contrasty and sharp output. Easy to configure.
@@ -21,15 +21,17 @@
     for even and odd integer scaling.
 
     Changelog:
+    v1.1: Update license; Better defaults; Don't compute alpha.
     v1.0: Initial release.
 */
 
 // clang-format off
+#pragma parameter CRT1TAP_SETTINGS "=== CRT-1tap settings ===" 0.0 0.0 1.0 1.0
 #pragma parameter MIN_THICK "MIN_THICK: Scanline thickness of dark pixels." 0.3 0.0 1.4 0.05
 #pragma parameter MAX_THICK "MAX_THICK: Scanline thickness of bright pixels." 1.05 0.0 1.4 0.05
 #pragma parameter V_SHARP "V_SHARP: Vertical sharpness of the scanline" 0.2 0.0 1.0 0.05
 #pragma parameter H_SHARP "H_SHARP: Horizontal sharpness of pixel transitions." 0.15 0.0 1.0 0.05
-#pragma parameter SUBPX_POS "SUBPX_POS: Scanline subpixel position." 0.05 -0.5 0.5 0.01
+#pragma parameter SUBPX_POS "SUBPX_POS: Scanline subpixel position." 0.15 -0.5 0.5 0.01
 #pragma parameter THICK_FALLOFF "THICK_FALLOFF: Reduction of thinner scanlines." 0.65 0.2 2.0 0.05
 // clang-format on
 
@@ -79,24 +81,21 @@ void main() {
     const float src_x =
         src_x_int + o -
         0.5f * s *
-            pow(2.0f * (o - s * src_x_fract), mix(1.5f, 10.0f, param.H_SHARP));
+            pow(2.0f * (o - s * src_x_fract), mix(1.0f, 6.0f, param.H_SHARP));
 
-    const vec4 signal =
+    const vec3 signal =
         texture(Source, vec2((src_x + 0.5f) * param.SourceSize.z,
-                             (src_y_int + 0.5f) * param.SourceSize.w));
+                             (src_y_int + 0.5f) * param.SourceSize.w))
+            .rgb;
 
     // Vectorize operations for speed.
-    const float eff_v_sharp = 5.0f + 100.0f * param.V_SHARP * param.V_SHARP;
-    const vec4 min_thick = {param.MIN_THICK, param.MIN_THICK, param.MIN_THICK,
-                            param.MIN_THICK};
-    const vec4 max_thick = {param.MAX_THICK, param.MAX_THICK, param.MAX_THICK,
-                            param.MAX_THICK};
-    const vec4 thick_falloff = {param.THICK_FALLOFF, param.THICK_FALLOFF,
-                                param.THICK_FALLOFF, param.THICK_FALLOFF};
-    FragColor =
-        signal * clamp(eff_v_sharp * ((pow(mix(min_thick, max_thick, signal),
-                                           thick_falloff) *
-                                       0.5f) -
-                                      abs(src_y_fract - 0.5f)),
-                       0.0f, 1.0f);
+    const float eff_v_sharp = 3.0f + 50.0f * param.V_SHARP * param.V_SHARP;
+    FragColor.rgb =
+        signal *
+        clamp(eff_v_sharp *
+                  ((pow(mix(param.MIN_THICK.xxx, param.MAX_THICK.xxx, signal),
+                        param.THICK_FALLOFF.xxx) *
+                    0.5f) -
+                   abs(src_y_fract - 0.5f)),
+              0.0f, 1.0f);
 }
