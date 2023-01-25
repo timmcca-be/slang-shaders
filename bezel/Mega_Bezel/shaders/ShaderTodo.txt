@@ -1,20 +1,40 @@
 ![Mega_Bezel_Logo|512x256, 75%](upload://6PNkvcMF9Go9Wnk6OJXfYR1opXI.png) 
 
-Mega Bezel is updated to V1.7.0_2022-12-21
+Mega Bezel is updated to V1.9.0_2023-01-22
 
 Changes:
-  * POTATO
-    * Fixed Background Masking and Blend Modes
-    * Added Colorize & Brightness
-    * Show Passes Feature
-      * Added switch to enable/disable applying scale and curvature to raw passes
-        * This allows you to compare the passes all with the same curvature or what the pass actually looks like
-      * Moved Show Passes parameters right underneath the AB Compare parameters so they can both easily be used together
+  * Added some more Sinden presets for SCREEN-ONLY and POTATO
+  * Added Screen Region to Resolution Debug text
+    * Good for getting the screen region pixel coordinates if you need them
+  * Adjusted Ambient Lighting Scaling when using the Inherit Zoom scale mode
+    * Now when you zoom out it is much less likely to generate a black frame covering the outer parts of the background image
+    * The minimum size of the lighting texture will be close to the height of the current viewport
+    * This reduces the likelihood that we will see the cutoff
+  * ScaleFx: Exposed more of the settings so they can be tweaked
+    * Default Settings changed:
+      * ScaleFx Threshold: now 0.43 (was 0.5)
+      * ScaleFx Filter Corners: now 0 (was 1)
+      * These settings result in a slighly clearer picture and less rounding of square corners
+  * SMOOTH-ADV ntsc presets: ntsc_scale adjusted so it visually matches the regular ADV ntsc presets
 
 ----------------------------------------------------
 --- TODO  ---------------------------------------
 ----------------------------------------------------
 
+  * Add back Raster Bloom
+  * Do new release
+  * Add Z-Fast to libretro repo
+  * Check difference between old and new NTSC
+  * Check out duplicate params in NTSC
+  * Check out independent bezel scale and reflection, reflection is not following the bezel
+  * Check brighter reflection in new NTSC
+
+  * Update Dual Screen to use params files
+  * Swap out // for # in base presets
+  * Add ability to have layers appear on top of the bezel but below the reflection
+    * One way to do this would be to have a CRT/Reflection layer offset which forces layers below to be composited on top of the bezel
+  * Fix CRT Blend Amount
+  * Adjustable softness of bezel outer edge for reflection
   * Adjustable Bezel Curvature per side?
   * Revisit Tate Mode / Vertical Scanline and Rotate CRT artifacts
     * Fast Sharpen & Sharp Smoother currently work on x axis, should be relative to scanline direction
@@ -76,6 +96,12 @@ Scene Dynamic Lighting
   * Reflection from screen on additional elements
     * Side Panels, Speaker Panel, Table
     * Masking of main and additional reflection
+    * Colored Mask to define areas
+      * Up      rgb(128,  255,  128)
+      * Down    rgb(128,  0,    128)
+      * Left    rgb(0,    128,  128)
+      * Right   rgb(255,  128,  128)
+      * Center  rgb(128,  128,  255)
   * Bounce lighting from screen to room back to the scene
     * Masking behind devices
   * Sprite sheet for arcade Lighting loop

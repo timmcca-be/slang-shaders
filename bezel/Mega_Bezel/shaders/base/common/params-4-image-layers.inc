@@ -93,6 +93,12 @@ float HSM_CUTOUT_CORNER_RADIUS = global.HSM_CUTOUT_CORNER_RADIUS;
 
 
 //---------------------------------------------------------------------------------------------------
+//    REFLECTION MASK
+//---------------------------------------------------------------------------------------------------
+#include "params-2-reflection-mask.inc"
+
+
+//---------------------------------------------------------------------------------------------------
 //    MASK DEBUG
 //---------------------------------------------------------------------------------------------------
 #pragma parameter HSM_MASK_DEBUG_EMPTY_LINE							" " 0 0 0.001 0.001
@@ -186,8 +192,8 @@ float HSM_BG_POS_X = global.HSM_BG_POS_X / -100;
 #pragma parameter HSM_BG_POS_Y                    "          Position Y"  0 -1000 1000 0.05
 float HSM_BG_POS_Y = global.HSM_BG_POS_Y / 100;
 
-#pragma parameter HSM_BG_MIRROR_WRAP              "          Mirror Wrap" 1 0 1 1
-float HSM_BG_MIRROR_WRAP = global.HSM_BG_MIRROR_WRAP;
+#pragma parameter HSM_BG_WRAP_MODE                "          Wrap Mode: NONE | TILED | MIRRORED" 1 0 2 1
+float HSM_BG_WRAP_MODE = global.HSM_BG_WRAP_MODE;
 
 
 //---------------------------------------------------------------------------------------------------

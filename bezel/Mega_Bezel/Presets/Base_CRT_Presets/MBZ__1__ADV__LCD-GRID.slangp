@@ -1,4 +1,4 @@
-shaders = 40
+shaders = 38
 
 shader0 = ../../shaders/base/add-params-all.slang
 alias0 = "CorePass"
@@ -43,105 +43,135 @@ alias5 = "IntroPass"
 shader6 = ../../shaders/dedither/dedither-gamma-prep-1-before.slang
 alias6 = LinearGamma
 
-shader7 = ../../shaders/hyllian/checkerboard-dedither/checkerboard-dedither-pass1.slang
-shader8 = ../../shaders/hyllian/checkerboard-dedither/checkerboard-dedither-pass2.slang
-shader9 = ../../shaders/hyllian/checkerboard-dedither/checkerboard-dedither-pass3.slang
-alias9 = "PreMdaptPass"
+shader7 = ../../shaders/hyllian/sgenpt-mix/sgenpt-mix-pass1.slang
+filter_linear7 = false
+scale_type7 = source
+scale7 = 1.0
 
-// De-Dithering - Mdapt
-shader10 = ../../shaders/mdapt/hsm-mdapt-pass0.slang
-shader11 = ../../shaders/mdapt/hsm-mdapt-pass1.slang
-shader12 = ../../shaders/mdapt/hsm-mdapt-pass2.slang
-shader13 = ../../shaders/mdapt/hsm-mdapt-pass3.slang
-shader14 = ../../shaders/mdapt/hsm-mdapt-pass4.slang
+shader8 = ../../shaders/hyllian/sgenpt-mix/sgenpt-mix-pass2.slang
+filter_linear8 = false
+scale_type8 = source
+scale8 = 1.0
 
-shader15 = ../../shaders/dedither/dedither-gamma-prep-2-after.slang
+shader9 = ../../shaders/hyllian/sgenpt-mix/sgenpt-mix-pass3.slang
+filter_linear9 = false
+scale_type9 = source
+scale9 = 1.0
+alias9 = CB_Output
 
-shader16 = ../../shaders/ps1dither/hsm-PS1-Undither-BoxBlur.slang
+shader10 = ../../shaders/hyllian/sgenpt-mix/sgenpt-mix-pass4.slang
+filter_linear10 = false
+scale_type10 = source
+scale10 = 1.0
 
-shader17 = ../../shaders/guest/extras/hsm-sharpsmoother.slang
-alias17 = "DeditherPass"
+shader11 = ../../shaders/hyllian/sgenpt-mix/sgenpt-mix-pass5.slang
+filter_linear11 = false
+
+shader12 = ../../shaders/dedither/dedither-gamma-prep-2-after.slang
+
+shader13 = ../../shaders/ps1dither/hsm-PS1-Undither-BoxBlur.slang
+
+shader14 = ../../shaders/guest/extras/hsm-g-sharp_resampler.slang
+alias14 = "DeditherPass"
+
+shader15 = ../../shaders/guest/extras/hsm-sharpsmoother.slang
+// alias15 = "DeditherPass"
 
 // GTU TV Processing
-shader18 = ../../shaders/gtu/hsm-gtu-pass1.slang
-scale_type18 = source
-scale18 = 1.0
-float_framebuffer18 = true
+shader16 = ../../shaders/gtu/hsm-gtu-pass1.slang
+scale_type16 = source
+scale16 = 1.0
+float_framebuffer16 = true
 
-shader19 = ../../shaders/gtu/hsm-gtu-pass2.slang
-scale_type_x19 = source
-scale_x19 = 1.0
-scale_type_y19 = source
-scale_y19 = 1.0
-filter_linear19 = false
-float_framebuffer19 = true
+shader17 = ../../shaders/gtu/hsm-gtu-pass2.slang
+scale_type_x17 = source
+scale_x17 = 1.0
+scale_type_y17 = source
+scale_y17 = 1.0
+filter_linear17 = false
+float_framebuffer17 = true
 
-shader20 = ../../shaders/base/stock.slang
-alias20 = "PreCRTPass"
+shader18 = ../../shaders/base/stock.slang
+alias18 = "PreCRTPass"
 
-shader21 = ../../shaders/guest/hsm-afterglow0.slang
-filter_linear21 = true
-scale_type21 = source
-scale21 = 1.0
-alias21 = "AfterglowPass"
+shader19 = ../../shaders/guest/hsm-afterglow0.slang
+filter_linear19 = true
+scale_type19 = source
+scale19 = 1.0
+alias19 = "AfterglowPass"
 
-shader22 = ../../shaders/guest/hsm-pre-shaders-afterglow.slang
-filter_linear22 = true
-scale_type22 = source
-mipmap_input22 = true
-scale22 = 1.0
+shader20 = ../../shaders/guest/hsm-pre-shaders-afterglow.slang
+filter_linear20 = true
+scale_type20 = source
+mipmap_input20 = true
+scale20 = 1.0
 
 // Color Correction with Dogway's awesome Grade shader
 // Grade is after Afterglow so that brightening the black level does not break the afterglow
-shader23 = ../../shaders/dogway/hsm-grade.slang
-filter_linear23 = false
-scale_type23 = source
-scale23 = 1.0
-alias23 = "ColorCorrectPass"
+shader21 = ../../shaders/dogway/hsm-grade.slang
+filter_linear21 = false
+scale_type21 = source
+scale21 = 1.0
+alias21 = "ColorCorrectPass"
 
-shader24 =  ../../shaders/guest/hsm-custom-fast-sharpen.slang
+shader22 =  ../../shaders/guest/hsm-custom-fast-sharpen.slang
+filter_linear22 = true
+scale_type22 = source
+scale_x22 = 1.0
+scale_y22 = 1.0
+
+shader23 = ../../shaders/base/stock.slang
+filter_linear23 = true
+scale_type23 = source
+scale_x23 = 1.0
+scale_y23 = 1.0
+alias23 = "PrePass"
+mipmap_input23 = true
+
+shader24 = ../../shaders/guest/hsm-avg-lum.slang
 filter_linear24 = true
 scale_type24 = source
-scale_x24 = 1.0
-scale_y24 = 1.0
-
-shader25 = ../../shaders/base/stock.slang
-filter_linear25 = true
-scale_type25 = source
-scale_x25 = 1.0
-scale_y25 = 1.0
-alias25 = "PrePass"
-mipmap_input25 = true
-
-shader26 = ../../shaders/guest/hsm-avg-lum.slang
-filter_linear26 = true
-scale_type26 = source
-scale26 = 1.0
-mipmap_input26 = true
-alias26 = "AvgLumPass"
+scale24 = 1.0
+mipmap_input24 = true
+alias24 = "AvgLumPass"
 
 // Pass referenced by subsequent blurring passes and crt pass
-shader27 = ../../shaders/guest/hsm-interlace-and-linearize.slang
-filter_linear27 = true
-scale_type27 = source
-scale27 = 1.0
-float_framebuffer27 = true
-alias27 = "LinearizePass"
+shader25 = ../../shaders/guest/hsm-interlace-and-linearize.slang
+filter_linear25 = true
+scale_type25 = source
+scale25 = 1.0
+float_framebuffer25 = true
+alias25 = "LinearizePass"
 
-shader28 = ../../shaders/base/delinearize.slang
-float_framebuffer28 = "true"
+shader26 = ../../shaders/base/delinearize.slang
+float_framebuffer26 = "true"
 
-shader29 = ../../shaders/lcd-cgwg/hsm-lcd-grid-v2.slang
-filter_linear29 = "false"
-scale_type29 = "viewport"
-scale29 = "1.0"
-float_framebuffer29 = "true"
-alias29 = "CRTPass"
+shader27 = ../../shaders/lcd-cgwg/hsm-lcd-grid-v2.slang
+filter_linear27 = "false"
+scale_type27 = "viewport"
+scale27 = "1.0"
+float_framebuffer27 = "true"
+alias27 = "CRTPass"
 
-shader30 = ../../shaders/base/post-crt-prep-image-layers.slang
+shader28 = ../../shaders/base/post-crt-prep-image-layers.slang
+mipmap_input28 = true
+scale_type28 = viewport
+float_framebuffer28 = true
+alias28 = "PostCRTPass"
+
+// Bezel Generation & Composite of Image Layers ----------------------------------------------------------------
+
+shader29 = ../../shaders/base/bezel-images-under-crt.slang
+filter_linear29 = true
+scale_type29 = viewport
+float_framebuffer29 = true
+alias29 = "BR_LayersUnderCRTPass"
+
+shader30 = ../../shaders/base/bezel-images-over-crt.slang
+filter_linear30 = true
 scale_type30 = viewport
 float_framebuffer30 = true
-alias30 = "PostCRTPass"
+alias30 = "BR_LayersOverCRTPass"
 
 // Reduce Resolution  ----------------------------------------------------------------
 //      Reduce the resolution to a small static size regardless of final resolution
@@ -201,24 +231,10 @@ shader36 = ../../shaders/base/reflection.slang
 scale_type36 = viewport
 alias36 = "ReflectionPass"
 
-// Bezel Generation & Composite of Image Layers ----------------------------------------------------------------
-
-shader37 = ../../shaders/base/bezel-images-under-crt.slang
-filter_linear37 = true
-scale_type37 = viewport
-float_framebuffer37 = true
-alias37 = "BR_LayersUnderCRTPass"
-
-shader38 = ../../shaders/base/bezel-images-over-crt.slang
-filter_linear38 = true
-scale_type38 = viewport
-float_framebuffer38 = true
-alias38 = "BR_LayersOverCRTPass"
-
 // Combine Passes ----------------------------------------------------------------
-shader39 = ../../shaders/base/combine-passes.slang
-scale_type39 = viewport
-alias39 = "CombinePass"
+shader37 = ../../shaders/base/combine-passes.slang
+scale_type37 = viewport
+alias37 = "CombinePass"
 // Define textures to be used by the different passes
 textures = "SamplerLUT1;SamplerLUT2;SamplerLUT3;SamplerLUT4;IntroImage;ScreenPlacementImage;TubeDiffuseImage;TubeColoredGelImage;TubeShadowImage;TubeStaticReflectionImage;BackgroundImage;BackgroundVertImage;ReflectionMaskImage;FrameTextureImage;CabinetGlassImage;DeviceImage;DeviceVertImage;DeviceLEDImage;DecalImage;NightLightingImage;NightLighting2Image;LEDImage;TopLayerImage;"
 

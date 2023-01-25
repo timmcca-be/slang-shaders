@@ -119,6 +119,7 @@ g_sat = 0.15
 g_gamma_out = 2.45
 
 shader17 = ../../shaders/base/post-crt-prep-potato.slang
+mipmap_input17 = true
 scale_type17 = viewport
 float_framebuffer17 = true
 alias17 = "PostCRTPass"
@@ -146,3 +147,6 @@ HSM_ASPECT_RATIO_MODE = 1
 // NTSC Parameters
 GAMMA_INPUT = 2.0
 gamma_out = 1.95
+HSM_CORE_RES_SAMPLING_MULT_SCANLINE_DIR = "200.000000"
+h_sharp = "15.000000"
+s_sharp = "1.500000"
