@@ -851,6 +851,10 @@ bool HSM_Fill_Ambient_Images(vec2 in_viewport_coord, vec2 in_viewport_unscaled_c
 
 		if (HSM_AMBIENT1_OPACITY > 0)
 		{
+			float ambient1_scale = HSM_AMBIENT1_SCALE;
+			if (HSM_AMBIENT1_SCALE_INHERIT_MODE == 1 && HSM_AMBIENT1_SCALE * HSM_VIEWPORT_ZOOM < 1)
+				ambient1_scale = 1 / HSM_VIEWPORT_ZOOM;
+
 			vec2 lighting_coord = GetSimpleImageScaledCoord(in_viewport_coord, 
 															in_viewport_unscaled_coord,
 															in_tube_coord,
@@ -858,7 +862,7 @@ bool HSM_Fill_Ambient_Images(vec2 in_viewport_coord, vec2 in_viewport_unscaled_c
 															in_ambient_sampler,
 															vec2(HSM_AMBIENT1_POSITION_X, HSM_AMBIENT1_POSITION_Y),
 															HSM_AMBIENT1_POS_INHERIT_MODE, 
-															vec2(HSM_AMBIENT1_SCALE * HSM_AMBIENT1_SCALE_X, HSM_AMBIENT1_SCALE), 
+															vec2(ambient1_scale * HSM_AMBIENT1_SCALE_X, ambient1_scale), 
 															HSM_AMBIENT1_SCALE_INHERIT_MODE, 
 															HSM_AMBIENT1_SCALE_KEEP_ASPECT,
 															HSM_AMBIENT1_MIRROR_HORZ,
@@ -875,6 +879,10 @@ bool HSM_Fill_Ambient_Images(vec2 in_viewport_coord, vec2 in_viewport_unscaled_c
 
 		if (HSM_AMBIENT2_OPACITY > 0)
 		{
+			float ambient2_scale = HSM_AMBIENT2_SCALE;
+			if (HSM_AMBIENT2_SCALE_INHERIT_MODE == 1 && HSM_AMBIENT2_SCALE * HSM_VIEWPORT_ZOOM < 1)
+				ambient2_scale = 1 / HSM_VIEWPORT_ZOOM;
+
 			vec2 lighting2_coord = GetSimpleImageScaledCoord(in_viewport_coord, 
 															in_viewport_unscaled_coord,
 															in_tube_coord,
@@ -882,7 +890,7 @@ bool HSM_Fill_Ambient_Images(vec2 in_viewport_coord, vec2 in_viewport_unscaled_c
 															in_ambient2_sampler,
 															vec2(HSM_AMBIENT2_POSITION_X, HSM_AMBIENT2_POSITION_Y),
 															HSM_AMBIENT2_POS_INHERIT_MODE, 
-															vec2(HSM_AMBIENT2_SCALE * HSM_AMBIENT2_SCALE_X, HSM_AMBIENT2_SCALE), 
+															vec2(ambient2_scale * HSM_AMBIENT2_SCALE_X, ambient2_scale), 
 															HSM_AMBIENT2_SCALE_INHERIT_MODE, 
 															HSM_AMBIENT2_SCALE_KEEP_ASPECT,
 															HSM_AMBIENT2_MIRROR_HORZ,
@@ -1044,3 +1052,16 @@ vec4 HSM_ApplyScanlineMask(vec4 in_color, vec2 screen_scale, vec2 in_coord, vec2
 
 	return clamp(out_color, 0, 1);
 }
+
+vec4 HSM_Apply_Sinden_Lightgun_Border(vec4 in_rgba, vec2 in_tube_diffuse_curved_coord, float in_tube_diffuse_mask, float in_black_edge_corner_radius)
+{
+	float sinden_gun_mask =  in_tube_diffuse_mask - HSM_GetCornerMask((in_tube_diffuse_curved_coord - 0.5) * (1 + vec2(1 / TUBE_DIFFUSE_ASPECT * HSM_SINDEN_BORDER_THICKNESS, HSM_SINDEN_BORDER_THICKNESS)) + 0.5, TUBE_DIFFUSE_ASPECT, in_black_edge_corner_radius, 0.99);
+	vec4 out_rgba = in_rgba;
+
+	vec3 base_rgb = vec3(1);
+	out_rgba.rgb = base_rgb * HSM_SINDEN_BORDER_BRIGHTNESS * sinden_gun_mask + (1 - sinden_gun_mask) * out_rgba.rgb;
+
+	// out_rgba.rgb += HSM_SINDEN_BORDER_OPACITY * sinden_gun_mask;
+	return out_rgba;
+}
+

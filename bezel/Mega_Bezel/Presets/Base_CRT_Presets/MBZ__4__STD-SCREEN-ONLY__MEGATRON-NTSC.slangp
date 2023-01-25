@@ -147,6 +147,7 @@ float_framebuffer21 = "true"
 alias21 = "CRTPass"
 
 shader22 = ../../shaders/base/post-crt-prep-no-reflect.slang
+mipmap_input22 = true
 scale_type22 = viewport
 float_framebuffer22 = true
 alias22 = "PostCRTPass"
@@ -257,3 +258,6 @@ HSM_REFLECT_GLOBAL_AMOUNT = "40.000000"
 // NTSC Parameters
 GAMMA_INPUT = 2.0
 gamma_out = 1.95
+HSM_CORE_RES_SAMPLING_MULT_SCANLINE_DIR = "200.000000"
+h_sharp = "15.000000"
+s_sharp = "1.500000"

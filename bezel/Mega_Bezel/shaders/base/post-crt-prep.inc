@@ -300,7 +300,7 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_linear, vec2 VIEWPORT_COORD, vec2 
 				out_color = normal_blended + out_color;
 			}
 		}
-	} 
+	}
 
 	#ifndef IS_NO_REFLECT_PRESET
 
@@ -328,6 +328,11 @@ vec4 HSM_GetPostCrtPreppedColor(vec4 in_color_linear, vec2 VIEWPORT_COORD, vec2 
 		out_color.rgb += tube_highlight_image * HSM_TUBE_STATIC_REFLECTION_IMAGE_OPACITY;
 	}
 	
+	if (HSM_SINDEN_BORDER_ON > 0.5)
+	{
+		out_color = HSM_Apply_Sinden_Lightgun_Border(out_color, tube_diffuse_curved_coord, tube_diffuse_mask, black_edge_corner_radius);
+	}
+
 	return out_color;
 }
 

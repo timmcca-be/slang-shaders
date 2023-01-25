@@ -109,10 +109,10 @@ vec2 HSM_GetTubeScale(vec2 screen_scale, float image_placement_screen_height, ve
 	// Add switch for independent scale
 	if (HSM_BZL_USE_INDEPENDENT_SCALE == 1)
 	{
-		if (HSM_USE_IMAGE_FOR_PLACEMENT == 0)
-			screen_scale = screen_scale / screen_scale.y * HSM_BZL_INDEPENDENT_SCALE;
+		if (HSM_USE_IMAGE_FOR_PLACEMENT > 0.5)
+			screen_scale = screen_scale / screen_scale.y * image_placement_screen_height * HSM_BZL_INDEPENDENT_SCALE / DEFAULT_SCREEN_HEIGHT;
 		else
-			screen_scale = screen_scale / screen_scale.y * image_placement_screen_height;
+			screen_scale = screen_scale / screen_scale.y * HSM_BZL_INDEPENDENT_SCALE;
 	}
 
 	float normalized_screen_height = screen_scale.y / DEFAULT_UNCORRECTED_SCREEN_SCALE.y;
@@ -587,6 +587,10 @@ float HSM_GetParameterSum()
 					+ HSM_GLOBAL_GRAPHICS_BRIGHTNESS * 100
 					+ HSM_STATIC_LAYERS_GAMMA
 
+					+ HSM_SINDEN_BORDER_ON
+					+ HSM_SINDEN_BORDER_THICKNESS
+					+ HSM_SINDEN_BORDER_EMPTY_TUBE_COMPENSATION
+
 					+ HSM_CACHE_GRAPHICS_ON
 					
 					// Night Lighting
@@ -680,10 +684,10 @@ float HSM_GetParameterSum()
 					// + HSM_TUBE_DIFFUSE_IMAGE_SATURATION
 					// + HSM_TUBE_DIFFUSE_IMAGE_BRIGHTNESS
 					// + HSM_TUBE_DIFFUSE_IMAGE_GAMMA
-					+ HSM_TUBE_EMPTY_THICKNESS
-					+ HSM_TUBE_EMPTY_THICKNESS_X_SCALE
 					+ HSM_TUBE_DIFFUSE_FORCE_ASPECT
 					+ HSM_TUBE_EXPLICIT_ASPECT
+					+ HSM_TUBE_EMPTY_THICKNESS
+					+ HSM_TUBE_EMPTY_THICKNESS_X_SCALE
 
 					// SCREEN BLACK EDGE
 					+ HSM_GLOBAL_CORNER_RADIUS
@@ -758,6 +762,14 @@ float HSM_GetParameterSum()
 					+ HSM_BZL_INNER_CORNER_RADIUS_SCALE * 100
 
 #ifdef HAS_BEZEL_PARAMS
+
+					// Reflection Image Mask
+					+ HSM_REFLECT_MASK_IMAGE_AMOUNT
+					+ HSM_REFLECT_MASK_FOLLOW_LAYER
+					+ HSM_REFLECT_MASK_FOLLOW_MODE
+					+ HSM_REFLECT_MASK_BRIGHTNESS * 100
+					+ HSM_REFLECT_MASK_BLACK_LEVEL
+
 					//	Bezel Params not in Screen Scale
 					+ HSM_BZL_INNER_EDGE_THICKNESS / 0.00007
 					+ HSM_BZL_INNER_EDGE_SHARPNESS * 100
@@ -852,7 +864,7 @@ float HSM_GetParameterSum()
 					+ HSM_BG_SCALE_X * 100
 					+ HSM_BG_POS_X * 100
 					+ HSM_BG_POS_Y * 100
-					+ HSM_BG_MIRROR_WRAP
+					+ HSM_BG_WRAP_MODE
 					+ HSM_BG_MIPMAPPING_BLEND_BIAS
 
 					// Background Vignette
@@ -1078,7 +1090,10 @@ vec4 HSM_GetColorForScreenInfoCache(vec2 viewport_coord, sampler2D feedback_pass
 	vec2 screen_scale = HSM_GetScreenScale(screen_aspect, screen_pos_and_height.z, cropped_rotated_size);
 	vec2 screen_size = GetScreenSizeWithZoom(screen_scale);
 
-	vec2 tube_diffuse_scale = HSM_GetTubeScale(screen_scale, screen_pos_and_height.z, vec2(HSM_TUBE_EMPTY_THICKNESS * HSM_TUBE_EMPTY_THICKNESS_X_SCALE, HSM_TUBE_EMPTY_THICKNESS));	
+	// Adjust tube empty thickness for Sinden lightgun bright edge border if needed
+	float tube_sinden_border_thickness =  HSM_SINDEN_BORDER_ON > 0.5 && HSM_SINDEN_BORDER_EMPTY_TUBE_COMPENSATION > 0.5 ? 0.6 * HSM_SINDEN_BORDER_THICKNESS * 60 : 0;
+
+	vec2 tube_diffuse_scale = HSM_GetTubeScale(screen_scale, screen_pos_and_height.z, vec2(HSM_TUBE_EMPTY_THICKNESS * HSM_TUBE_EMPTY_THICKNESS_X_SCALE + tube_sinden_border_thickness, HSM_TUBE_EMPTY_THICKNESS + screen_aspect * tube_sinden_border_thickness));	
 	float tube_diffuse_aspect = tube_diffuse_scale.x / tube_diffuse_scale.y * output_aspect;
 
 	// TODO need to adjust height in screen_pos_and_height with the tube extra thickness
