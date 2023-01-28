@@ -54,7 +54,8 @@ layout(push_constant) uniform Push
 	float use_frame;
 	float curvature;
 	float wiggle_toggle;
-   float scanroll;
+ 	float scanroll;
+	float vignette;
 } params;
 
 #pragma parameter use_frame "Use Frame Image" 0.0 0.0 1.0 1.0
@@ -62,7 +63,7 @@ layout(push_constant) uniform Push
 #pragma parameter curvature "Curvature" 2.0 0.0001 4.0 0.25
 #pragma parameter wiggle_toggle "Interference" 0.0 0.0 1.0 1.0
 #pragma parameter scanroll "Rolling Scanlines" 1.0 0.0 1.0 1.0
-
+#pragma parameter vignette "Vignette" 1.0 0.0 1.0 0.05
 #define gl_FragCoord (vTexCoord.xy * params.OutputSize.xy)
 #define backbuffer accum1
 #define blurbuffer blur2
@@ -174,7 +175,7 @@ void main()
     col = clamp(col*1.3 + 0.75*col*col + 1.25*col*col*col*col*col,vec3(0.0),vec3(10.0));
 		
     /* Vignette */
-    float vig = (0.1 + 1.0*16.0*curved_uv.x*curved_uv.y*(1.0-curved_uv.x)*(1.0-curved_uv.y));
+    float vig = ((1.0-0.99*params.vignette) + 1.0*16.0*curved_uv.x*curved_uv.y*(1.0-curved_uv.x)*(1.0-curved_uv.y));
     vig = 1.3*pow(vig,0.5);
     col *= vig;
     
