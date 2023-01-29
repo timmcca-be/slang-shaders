@@ -81,9 +81,8 @@ layout(location = 0) out vec2 vTexCoord;
 
 void main()
 {
-   vec4 modpos = vec4(Position.x, 1.-Position.y, Position.z, Position.w);
-   gl_Position = global.MVP * modpos;
-   vTexCoord = TexCoord;
+   gl_Position = global.MVP * Position;
+   vTexCoord = vec2(TexCoord.x, 1.0 - TexCoord.y);
 }
 
 #pragma stage fragment
