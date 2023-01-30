@@ -16,6 +16,7 @@
 
     This implementation adds a configurable blur strength which can diminish or accentuate the
     effect compared to the reference implementation, equivalent to strength 1.0.
+    A blur strength above 3.0 may lead to artifacts, especially on presets with fewer passes.
 
     Changelog:
     v1.0: Initial release.
@@ -23,5 +24,5 @@
 
 // clang-format off
 #pragma parameter DUAL_FILTER_SETTINGS "=== Dual filter v1.0 settings ===" 0.0 0.0 1.0 1.0
-#pragma parameter BLUR_STRENGTH "Blur strength" 1.0 0.6 5.0 0.1
+#pragma parameter BLUR_STRENGTH "Blur strength" 1.0 0.6 7.5 0.1
 // clang-format on
