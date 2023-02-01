@@ -283,7 +283,7 @@ vec3 Mask(vec2 pos, vec3 c)
         
         if      (mod(pos.y,2.0)==1.0 && left == 1.0 || mod(pos.y,2.0)==0.0 && left == 0.0 ) Mask*=bright; 
         
-        return mask; 
+        return Mask; 
     } 
     
 	 else if (shadowMask == 10.0)
