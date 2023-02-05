@@ -3,7 +3,7 @@
 /*
    Average Luminance Shader, Smart Edge Interpolation Coefficients Calculation
    
-   Copyright (C) 2018-2020 guest(r) - guest.r@gmail.com
+   Copyright (C) 2018-2022 guest(r) - guest.r@gmail.com
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -51,7 +51,7 @@ layout(location = 0) out vec2 vTexCoord;
 void main()
 {
    gl_Position = global.MVP * Position;
-   vTexCoord = TexCoord * 1.0001;
+   vTexCoord = TexCoord * 1.00001;
 }
 
 #pragma stage fragment
