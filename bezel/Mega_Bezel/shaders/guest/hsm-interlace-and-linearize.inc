@@ -46,10 +46,14 @@ layout(std140, set = 0, binding = 0) uniform UBO
 } global;
 
 
-// #pragma parameter GAMMA_INPUT "Gamma Input" 2.4 1.0 5.0 0.05
-*/
+// #pragma parameter bogus_gamma "[ GAMMA OPTIONS ]: " 0.0 0.0 0.0 1.0
 
-/*
+// #pragma parameter GAMMA_INPUT "          Gamma Input" 2.4 1.0 5.0 0.05
+// #define GAMMA_INPUT params.GAMMA_INPUT
+
+// #pragma parameter gamma_out "          Gamma out" 2.4 1.0 5.0 0.05
+// #define gamma_out    params.gamma_out     // output gamma
+
 // #pragma parameter bogus_interlacing "[ INTERLACING OPTIONS ]: " 0.0 0.0 0.0 1.0
 
 // #pragma parameter inter "          Interlace Trigger Resolution :" 350.0 0.0 800.0 25.0
@@ -178,7 +182,7 @@ void main()
 	use_vert_scanlines_bool = (USE_VERTICAL_SCANLINES > 0.5);
 
 	// HSM Added
-	if (HSM_ROTATE_CORE_IMAGE > 0.5)
+	if (abs(HSM_ROTATE_CORE_IMAGE) > 0.5)
 	{
 		use_vert_scanlines_bool = !use_vert_scanlines_bool;
 	}
@@ -284,6 +288,7 @@ void main()
 			noise_size = HSM_SIGNAL_NOISE_SIZE_MULT;
 
 		vec3 noise0 = noise(vec3(floor(global.SourceSize.xy * vTexCoord / noise_size), float(global.FrameCount)), HSM_SIGNAL_NOISE_AMOUNT);		
+		noise0 = clamp(HSM_SIGNAL_NOISE_BLACK_LEVEL * (noise0 - 0.5) + 0.5, 0, 1);
 		if (HSM_SIGNAL_NOISE_TYPE < 0.5)
 			c = mix(c, 				
 					noise0,

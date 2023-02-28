@@ -198,6 +198,7 @@ float HSM_SINDEN_BORDER_EMPTY_TUBE_COMPENSATION;
 	//    SIGNAL NOISE
 	float HSM_SIGNAL_NOISE_ON;
 	float HSM_SIGNAL_NOISE_AMOUNT;
+float HSM_SIGNAL_NOISE_BLACK_LEVEL;
 	float HSM_SIGNAL_NOISE_SIZE_MODE;
 	float HSM_SIGNAL_NOISE_SIZE_MULT;
 	float HSM_SIGNAL_NOISE_TYPE;
@@ -700,17 +701,28 @@ float HSM_REFLECT_MASK_MIPMAPPING_BLEND_BIAS;
 	float post_br;
 	float post_br_affect_black_level;
 
+	float m_glow;
+	float m_glow_low;
+	float m_glow_high;
+	float m_glow_dist;
+	float m_glow_mask;
+	float smask_mit;
+
 	float glow;
 	float bloom;
-float mask_bloom;
+	float mask_bloom;
 	float bloom_dist;
 	float halation;
 
 
 	float TATE;
 	float IOS;
+	float GDV_RASTER_BLOOM_ON;
 	float OS;
 	float BLOOM;
+	float GDV_OVERSCAN;
+float GDV_OVERSCAN_X;
+float GDV_OVERSCAN_Y;
 	float overscanX;
 	float overscanY;
 	float intres;

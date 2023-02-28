@@ -23,7 +23,7 @@
 */
 
 // Screen Scale Required Parameters
-#pragma parameter HSM_MEGA_BEZEL_TITLE								"[ --- HSM MEGA BEZEL V1.9.0_2023-01-22 --- ]" 0 0 0.001 0.001
+#pragma parameter HSM_MEGA_BEZEL_TITLE								"[ --- HSM MEGA BEZEL V1.11.0_2023-02-25 --- ]" 0 0 0.001 0.001
 
 #pragma parameter HSM_RESOLUTION_DEBUG_ON							"          Show Resolution Info" 0 0 1 1
 float HSM_RESOLUTION_DEBUG_ON = global.HSM_RESOLUTION_DEBUG_ON;
@@ -138,7 +138,7 @@ float HSM_FLIP_CORE_VERTICAL = -(global.HSM_FLIP_CORE_VERTICAL * 2 - 1);
 // float HSM_FLIP_CORE_HORIZONTAL = global.HSM_FLIP_CORE_HORIZONTAL;
 float HSM_FLIP_CORE_HORIZONTAL = -(global.HSM_FLIP_CORE_HORIZONTAL * 2 - 1);
 
-#pragma parameter HSM_ROTATE_CORE_IMAGE								"          Rotate CRT Tube"  0 0 1 1
+#pragma parameter HSM_ROTATE_CORE_IMAGE								"          Rotate CRT Tube --  -1:270 | 0 | 1:90"  0 -1 1 1
 float HSM_ROTATE_CORE_IMAGE = global.HSM_ROTATE_CORE_IMAGE;
 
 
@@ -307,10 +307,15 @@ float HSM_CROP_BLACK_THRESHOLD = global.HSM_CROP_BLACK_THRESHOLD / 100;
 //---------------------------------------------------------------------------------------------------
 //    DREZ Filter
 //---------------------------------------------------------------------------------------------------
-#pragma parameter HSM_DREZ_EMPTY_LINE							" " 0 0 0.001 0.001
-#pragma parameter HSM_DREZ_TITLE "[ DREZ DOWNSAMPLE FILTER - HYLLIAN - DREZ PRESETS ONLY ]:" 0 0 0.001 0.001
+#pragma parameter HSM_GSHARP_DREZ_EMPTY_LINE		" " 0 0 0.001 0.001
+#pragma parameter GSHARP_DREZ_TITLE 	"[ --- DREZ DOWNSAMPLE FILTER - GUEST.R G-SHARP RESAMPLER --- ]:"  0 0 0.01 0.01
 
-#pragma parameter C_FILTER_MODE "     DREZ Filter: B-SPLINE | BICUBIC | CATMULL-ROM | BICUBIC H" 0 0 3 1
+#pragma parameter HSM_DREZ_GSHARP_ON 	"          G-SHARP ON" 	  1 0 1 1
+// Default was 1.2, now set to 2.3 to match smoothing in Hyllian b-spline
+#pragma parameter HSM_DREZ_HSHARP0 		"          Filter Range"  2.3 1.0 6.0 0.1
+#pragma parameter HSM_DREZ_SIGMA_HV 		"          Gaussian Blur Sigma" 0.75 0.1 7.0 0.05
+#pragma parameter HSM_DREZ_SHAR 			"          Sharpness Definition" 0.5 0.0 2.0 0.05
+#pragma parameter HSM_DREZ_HAR 			"          Anti-Ringing" 0.5 0.0 1.0 0.10
 
 //---------------------------------------------------------------------------------------------------
 //    SCANLINE DIRECTION
@@ -455,6 +460,9 @@ float HSM_CRT_CURVATURE_SCALE = global.HSM_CRT_CURVATURE_SCALE / 100;
 
 #pragma parameter HSM_SIGNAL_NOISE_AMOUNT 						    "          Amount" 0.2 -1.0 1.0 0.02
 #define HSM_SIGNAL_NOISE_AMOUNT global.HSM_SIGNAL_NOISE_AMOUNT
+
+#pragma parameter HSM_SIGNAL_NOISE_BLACK_LEVEL 						"          Contrast"  100 0 300 5
+#define HSM_SIGNAL_NOISE_BLACK_LEVEL global.HSM_SIGNAL_NOISE_BLACK_LEVEL / 100
 
 #pragma parameter HSM_SIGNAL_NOISE_SIZE_MODE 						"          Noise Resolution Mode:  SCANLINE | CORE | SMOOTHED" 0 0 2 1
 #define HSM_SIGNAL_NOISE_SIZE_MODE global.HSM_SIGNAL_NOISE_SIZE_MODE

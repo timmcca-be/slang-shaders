@@ -1,7 +1,7 @@
 /*
    CRT - Guest - Advanced
    
-   Copyright (C) 2018-2022 guest(r) - guest.r@gmail.com
+   Copyright (C) 2018-2023 guest(r) - guest.r@gmail.com
 
    Incorporates many good ideas and suggestions from Dr. Venom.
    I would also like give thanks to many Libretro forums members for continuous feedback, suggestions and caring about the shader.
@@ -28,7 +28,7 @@
 #pragma parameter GDV_BRIGHTNESS_EMPTY_LINE							" " 0 0 0.001 0.001
 #pragma parameter bogus_brightness "[ BRIGHTNESS SETTINGS ]:" 0.0 0.0 1.0 1.0
 
-#pragma parameter glow "          Glow Strength -- glow" 0.08 -2.0 2.0 0.01
+#pragma parameter glow 			"          (Magic) Glow Strength -- glow" 0.08 -2.0 2.0 0.01
 #define glow         global.glow     // Glow Strength
 
 #pragma parameter bloom "          Bloom Strength -- bloom" 0.0 -2.0 2.0 0.05
@@ -76,7 +76,7 @@
 #pragma parameter vertmask "          Scanline Color Deconvergence -- vertmask" 0.0 -1.0 1.0 0.1
 #define vertmask     global.vertmask     // Scanline deconvergence colors
 
-#pragma parameter scans "          Scanline Saturation / Mask Falloff -- scans" 0.4 0.0 3.5 0.05
+#pragma parameter scans "          Scanline Saturation / Mask Falloff -- scans" 0.5 -5.0 5.0 0.10
 #define scans        global.scans     // scanline saturation
 
 #pragma parameter scan_falloff "          Scanline Falloff -- scan_falloff" 1.0 0.20 2.0 0.05
@@ -100,10 +100,10 @@
 #pragma parameter h_sharp "          Horizontal sharpness -- h_sharp" 5.20 0.20 15.0 0.10
 #define h_sharp      global.h_sharp     // pixel sharpness
 
-#pragma parameter s_sharp "          Substractive sharpness (1.0 recommended) -- s_sharp" 0.80 0.0 1.5 0.10
+#pragma parameter s_sharp "          Substractive sharpness (1.0 recommended) -- s_sharp" 0.50 0.0 2.0 0.10
 #define s_sharp      global.s_sharp     // substractive sharpness
 
-#pragma parameter ring "          Substractive sharpness Ringing -- ring" 0.8 0.0 4.0 0.1
+#pragma parameter ring "          Substractive sharpness Ringing -- ring" 0.0 0.0 3.0 0.05
 #define ring      global.ring     // substractive sharpness ringing
 
 #pragma parameter smart_ei "          Smart Edges Effect Strength -- smart_ei" 0.0 0.0 0.75 0.01
@@ -125,11 +125,26 @@
 // #pragma parameter IOS "          Integer Scaling: Odd:Y, Even:'X'+Y" 0.0 0.0 4.0 1.0
 // #define IOS          params.IOS     // Smart Integer Scaling
 
-// #pragma parameter OS "          R. Bloom Overscan Mode" 1.0 0.0 2.0 1.0
-// #define OS           params.OS     // Do overscan
+#pragma parameter GDV_RASTERBLOOM_EMPTY_LINE							" " 0 0 0.001 0.001
+#pragma parameter GDV_RASTERBLOOM_TITLE "[ OVERSCAN & RASTER BLOOM ]: " 0.0 0.0 1.0 1.0
 
-// #pragma parameter BLOOM "          Raster bloom %" 0.0 0.0 20.0 1.0
-// #define BLOOM        params.BLOOM     // Bloom overscan percentage
+#pragma parameter GDV_OVERSCAN "          Overscan % -- GDV_OVERSCAN" 0 -50 100 0.5
+#define GDV_OVERSCAN        (global.GDV_OVERSCAN / 100)
+
+#pragma parameter GDV_OVERSCAN_X "          Overscan X % -- GDV_OVERSCAN_X" 0 -50 100 0.5
+#define GDV_OVERSCAN_X        (GDV_OVERSCAN + global.GDV_OVERSCAN_X / 100)
+
+#pragma parameter GDV_OVERSCAN_Y "          Overscan Y % -- GDV_OVERSCAN_Y" 0 -50 100 0.5
+#define GDV_OVERSCAN_Y        (GDV_OVERSCAN + global.GDV_OVERSCAN_Y / 100)
+
+#pragma parameter GDV_RASTER_BLOOM_ON "          Raster Bloom ON -- GDV_RASTER_BLOOM_ON" 0 0 1 1
+#define GDV_RASTER_BLOOM_ON        global.GDV_RASTER_BLOOM_ON
+
+#pragma parameter OS "          Raster Bloom Overscan Mode -- OS" 2.0 0.0 2.0 1.0
+#define OS           global.OS
+
+#pragma parameter BLOOM "          Raster Bloom % -- BLOOM" 5.0 0.0 20.0 1.0
+#define BLOOM        global.BLOOM     // Bloom overscan percentage
 
 // #pragma parameter warpX "          CurvatureX (default 0.03)" 0.0 0.0 0.25 0.01
 // #define warpX        params.warpX     // Curvature X
@@ -224,12 +239,13 @@ vec2 Warp(vec2 pos)
 	return pos*0.5 + 0.5;
 }
 
+*/
+
 vec2 Overscan(vec2 pos, float dx, float dy){
 	pos=pos*2.0-1.0;    
 	pos*=vec2(dx,dy);
 	return pos*0.5+0.5;
 } 
-*/
 
 vec3 gc(vec3 c)
 {
@@ -317,8 +333,37 @@ void main()
  	*/
 
 	// HSM Added
+
+
+	// HSM Added
 	vec2 screen_curved_coord = HSM_GetCRTShaderCurvedCoord(SCREEN_COORD);
+
+	// Screen Curved Coordinate but not Mirrored
+	vec2 screen_curved_coord_with_overscan = HSM_ApplyOverscan(screen_curved_coord, GDV_OVERSCAN_X, GDV_OVERSCAN_Y);
+
 	vec2 pos = HSM_GetMirrorWrappedCoord(screen_curved_coord);
+
+	// Add overscan to mirror wrapped coord
+	pos = HSM_ApplyOverscan(pos, GDV_OVERSCAN_X, GDV_OVERSCAN_Y);
+			
+	vec2 screen_scale_with_overscan = SCREEN_SCALE * (vec2(GDV_OVERSCAN_X, GDV_OVERSCAN_Y) + 1);
+
+	// Screen Coordinate overscan but without curvature 
+	vec2 screen_coord_with_overscan = HSM_ApplyOverscan(SCREEN_COORD, GDV_OVERSCAN_X, GDV_OVERSCAN_Y);
+
+	if (GDV_RASTER_BLOOM_ON > 0.5)
+	{
+		pos = HSM_ApplyRasterBloomOverscan(pos, OS, BLOOM, lum);
+		screen_curved_coord_with_overscan = HSM_ApplyRasterBloomOverscan(screen_curved_coord_with_overscan, OS, BLOOM, lum);
+		screen_coord_with_overscan = HSM_ApplyRasterBloomOverscan(screen_coord_with_overscan, OS, BLOOM, lum);
+		screen_scale_with_overscan *= HSM_GetRasterBloomScale(OS, BLOOM, lum);
+
+		if (HHLP_IsOutsideCoordSpace(screen_curved_coord_with_overscan))
+		{
+			FragColor = vec4(0);
+			return;
+		}
+	}
 
 	bool smarte  = (smart_ei > 0.01); // smart edge interpolation on / off
 
@@ -363,7 +408,8 @@ void main()
 	float sharp1 = s_sharp * zero;
 	
 	/* HSM Removed
-	float fdivider = max(min(mix(prescalex.x, prescalex.y,TATE), 2.0), 1.5*float(interb));
+	float idiv = clamp(mix(SourceSize.x, SourceSize.y, TATE) / 400.0, 1.0, 2.0);
+	float fdivider = max(min(mix(prescalex.x, prescalex.y,TATE), 2.0), idiv*float(interb));
 	*/
 	
 	// HSM Added
@@ -390,8 +436,8 @@ void main()
 
 	float twl3 = max(wl3 - sharp1, 0.0);
 	float twl2 = max(wl2 - sharp1, mix(-0.12, 0.0, 1.0-fp1*fp1));
-	float twl1 = max(wl1 - sharp1, 0.0);
-	float twr1 = max(wr1 - sharp1, 0.0);
+	float twl1 = max(wl1 - sharp1, -0.12);
+	float twr1 = max(wr1 - sharp1, -0.12);
 	float twr2 = max(wr2 - sharp1, mix(-0.12, 0.0, 1.0-fpx*fpx));
 	float twr3 = max(wr3 - sharp1, 0.0);
 	
@@ -408,7 +454,7 @@ void main()
 		c2 = max(c2 - sth, 0.0);
 	}
 
-	vec3 l3, l2, l1, r1, r2, r3, sl2, sl1, sr1, sr2, color1, color2, colmin, colmax;
+	vec3 l3, l2, l1, r1, r2, r3, color1, color2, colmin, colmax;
 
 	l3 = COMPAT_TEXTURE(LinearizePass, pC4 -off2).rgb;
 	l2 = COMPAT_TEXTURE(LinearizePass, pC4 -offx).rgb;
@@ -442,8 +488,8 @@ void main()
 	float rm2 = max(max(r2.r,r2.g),r2.b);	
 
 	float swl2 = max(twl2, 0.0) * (dot(l2,luma) + ts);
-	float swl1 = twl1 * (dot(l1,luma) + ts);
-	float swr1 = twr1 * (dot(r1,luma) + ts);
+	float swl1 = max(twl1, 0.0) * (dot(l1,luma) + ts);
+	float swr1 = max(twr1, 0.0) * (dot(r1,luma) + ts);
 	float swr2 = max(twr2, 0.0) * (dot(r2,luma) + ts);
 	
 	float fscolor1 = (lm2*swl2 + lm1*swl1 + rm1*swr1 + rm2*swr2)/(swl2+swl1+swr1+swr2);
@@ -493,8 +539,8 @@ void main()
 	rm2 = max(max(r2.r,r2.g),r2.b);
 
 	swl2 = max(twl2, 0.0) * (dot(l2,luma) + ts);
-	swl1 = twl1 * (dot(l1,luma) + ts);
-	swr1 = twr1 * (dot(r1,luma) + ts);
+	swl1 = max(twl1, 0.0) * (dot(l1,luma) + ts);
+	swr1 = max(twr1, 0.0) * (dot(r1,luma) + ts);
 	swr2 = max(twr2, 0.0) * (dot(r2,luma) + ts);
 	
 	float fscolor2 = (lm2*swl2 + lm1*swl1 + rm1*swr1 + rm2*swr2)/(swl2+swl1+swr1+swr2);
@@ -558,8 +604,10 @@ if (!interb)
 	cref1 = color1 / mc1;
 	cref2 = color2 / mc2;
 
-	w1 = pow(w1, mix(2.0*scans.xxx + 1.0, 1.0.xxx, cref1))*mix(1.0.xxx + 0.075*scans, 1.0.xxx, cref1);
-	w2 = pow(w2, mix(2.0*scans.xxx + 1.0, 1.0.xxx, cref2))*mix(1.0.xxx + 0.075*scans, 1.0.xxx, cref2);
+	float scanpow1 = (scans > 0.0) ? 1.0 : pow(f1, 0.375);
+	float scanpow2 = (scans > 0.0) ? 1.0 : pow(f2, 0.375);	
+	w1 = pow(w1, mix(2.0*abs(scans).xxx + 1.0, 1.0.xxx, mix(1.0.xxx, cref1, scanpow1)));
+	w2 = pow(w2, mix(2.0*abs(scans).xxx + 1.0, 1.0.xxx, mix(1.0.xxx, cref2, scanpow2)));
 	
 	// Scanline Deconvergence
 	
@@ -622,6 +670,6 @@ if (abs(vertmask) > 0.025)
 	if (HSM_GetUseFakeScanlines())
 	{
 		vec2 tube_curved_coord = HSM_GetTubeCurvedCoord(TUBE_DIFFUSE_COORD, 1, TUBE_DIFFUSE_SCALE, TUBE_SCALE, TUBE_DIFFUSE_ASPECT, 1);
-		FragColor = HSM_ApplyScanlineMask(FragColor, SCREEN_SCALE, SCREEN_COORD, screen_curved_coord, tube_curved_coord, HSM_FAKE_SCANLINE_OPACITY);
+		FragColor = HSM_ApplyScanlineMask(FragColor, screen_scale_with_overscan, screen_coord_with_overscan, screen_curved_coord_with_overscan, tube_curved_coord, HSM_FAKE_SCANLINE_OPACITY);
 	}
 }
