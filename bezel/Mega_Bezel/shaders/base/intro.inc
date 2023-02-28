@@ -106,12 +106,16 @@ vec4 GetColorWithIntro(vec4 in_color, vec2 in_coord, in sampler2D in_logo_image_
    in_coord.y = HSM_FLIP_VIEWPORT_VERTICAL * HSM_FLIP_CORE_VERTICAL * in_coord.y;
    in_coord.x = HSM_FLIP_VIEWPORT_HORIZONTAL * HSM_FLIP_CORE_HORIZONTAL * in_coord.x;
 
-   if (HSM_ROTATE_CORE_IMAGE > 0.5)
+   if (abs(HSM_ROTATE_CORE_IMAGE) == 1)
    {
       in_coord.xy = in_coord.yx;
-      in_coord.y = (in_coord.y - 0.5) * -1 + 0.5;
+
+      if (HSM_ROTATE_CORE_IMAGE == 1)
+         in_coord.y = (in_coord.y - 0.5) * -1 + 0.5;
+      else if (HSM_ROTATE_CORE_IMAGE == -1)
+         in_coord.x = (in_coord.x - 0.5) * -1 + 0.5;
    }
-   
+
    float frame_count = HSM_INTRO_WHEN_TO_SHOW == 2 ? CURRENT_FRAME_FROM_CACHE_INFO : global.FrameCount;
 
    float mask_wait = 20 / HSM_INTRO_SPEED;
@@ -152,7 +156,7 @@ vec4 GetColorWithIntro(vec4 in_color, vec2 in_coord, in sampler2D in_logo_image_
       vec2 noise_res = global.SourceSize.xy;
       noise_res = min(noise_res, vec2(640, 480));
 
-      if (HSM_ROTATE_CORE_IMAGE > 0.5)
+      if (abs(HSM_ROTATE_CORE_IMAGE) > 0.5)
          noise_res.xy = noise_res.yx;
 
 		vec2 quantized_coord = vec2(floor((in_coord.x + 0.01) * noise_res.x) / noise_res.x, floor((in_coord.y + 0.01) * noise_res.y) / noise_res.y);
@@ -189,7 +193,7 @@ vec4 GetColorWithIntro(vec4 in_color, vec2 in_coord, in sampler2D in_logo_image_
 
       float intro_logo_height = HSM_INTRO_LOGO_HEIGHT;
       if (intro_logo_height == 0)
-         intro_logo_height = HSM_ROTATE_CORE_IMAGE > 0.5 ? intro_image_res.y / global.OriginalSize.y
+         intro_logo_height = abs(HSM_ROTATE_CORE_IMAGE) > 0.5 ? intro_image_res.y / global.OriginalSize.y
                                                          : intro_image_res.y / global.OriginalSize.x;
 
       vec2 intro_image_scale = vec2(intro_logo_height * intro_image_aspect / SCREEN_ASPECT, intro_logo_height) * min(SCREEN_ASPECT, 1);

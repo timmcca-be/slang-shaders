@@ -1,7 +1,7 @@
 /*
    CRT - Guest - Advanced
    
-   Copyright (C) 2018-2022 guest(r) - guest.r@gmail.com
+   Copyright (C) 2018-2023 guest(r) - guest.r@gmail.com
 
    Incorporates many good ideas and suggestions from Dr. Venom.
    I would also like give thanks to many Libretro forums members for continuous feedback, suggestions and caring about the shader.
@@ -25,28 +25,38 @@
 #pragma parameter GDV_BRIGHTNESS_EMPTY_LINE							" " 0 0 0.001 0.001
 #pragma parameter bogus_brightness "[ BRIGHTNESS SETTINGS ]:" 0.0 0.0 1.0 1.0
 
-#pragma parameter glow "          Glow Strength -- glow" 0.08 -2.0 2.0 0.01
+#pragma parameter m_glow 		"          Ordinary Glow / Magic Glow -- m_glow" 0.0 0.0 1.0 1.0
+
+#pragma parameter m_glow_low 	"          Magic Glow Low Strength -- m_glow_low" 0.35 0.0 7.0 0.05 
+
+#pragma parameter m_glow_high 	"          Magic Glow High Strength -- m_glow_high" 5.0 0.0 7.0 0.10 
+
+#pragma parameter m_glow_dist 	"          Magic Glow Distribution -- m_glow_dist" 1.0 0.20 4.0 0.05 
+
+#pragma parameter m_glow_mask "          Magic Glow Mask Strength -- m_glow_mask" 1.0 0.0 2.0 0.025
+
+#pragma parameter glow 			"          (Magic) Glow Strength -- glow" 0.08 -2.0 2.0 0.01
 #define glow         global.glow     // Glow Strength
 
-#pragma parameter bloom "          Bloom Strength -- bloom" 0.0 -2.0 2.0 0.05
+#pragma parameter bloom 		"          Bloom Strength -- bloom" 0.0 -2.0 2.0 0.05
 #define bloom         global.bloom     // bloom effect
 
-#pragma parameter mask_bloom "          Mask Bloom -- mask_bloom" 0.0 0.0 2.0 0.05
+#pragma parameter mask_bloom 	"          Mask Bloom -- mask_bloom" 0.0 0.0 2.0 0.05
 #define mask_bloom         global.mask_bloom     // bloom effect
 
-#pragma parameter bloom_dist "          Bloom Distribution -- bloom_dist" 0.0 0.0 3.0 0.05
+#pragma parameter bloom_dist 	"          Bloom Distribution -- bloom_dist" 0.0 0.0 3.0 0.05
 #define bloom_dist         global.bloom_dist     // bloom effect distribution
 
-#pragma parameter halation "          Halation Strength -- halation" 0.0 -2.0 2.0 0.025
+#pragma parameter halation 		"          Halation Strength -- halation" 0.0 -2.0 2.0 0.025
 #define halation         global.halation     // halation effect
 
-#pragma parameter gamma_c "          Gamma Correct -- gamma_c" 1.0 0.50 2.0 0.025
+#pragma parameter gamma_c 		"          Gamma Correct -- gamma_c" 1.0 0.50 2.0 0.025
 #define gamma_c   global.gamma_c     // adjust brightness
 
-#pragma parameter brightboost "          Bright Boost Dark Pixels -- brightboost" 1.40 0.25 10.0 0.05
+#pragma parameter brightboost 	"          Bright Boost Dark Pixels -- brightboost" 1.40 0.25 10.0 0.05
 #define brightboost  global.brightboost     // adjust brightness
 
-#pragma parameter brightboost1 "          Bright Boost Bright Pixels -- brightboost1" 1.10 0.25 3.00 0.025
+#pragma parameter brightboost1 	"          Bright Boost Bright Pixels -- brightboost1" 1.10 0.25 3.00 0.025
 #define brightboost1  global.brightboost1     // adjust brightness
 
 // #pragma parameter bogus_screen "[ SCREEN OPTIONS ]: " 0.0 0.0 1.0 1.0
@@ -60,11 +70,23 @@
 // #pragma parameter IOS "          Integer Scaling: Odd:Y, Even:'X'+Y" 0.0 0.0 4.0 1.0
 // #define IOS          params.IOS     // Smart Integer Scaling
 
-// #pragma parameter OS "          R. Bloom Overscan Mode" 1.0 0.0 2.0 1.0
-// #define OS           params.OS     // Do overscan
+#pragma parameter GDV_OVERSCAN "          Overscan % -- GDV_OVERSCAN" 0 -50 100 0.5
+#define GDV_OVERSCAN        (global.GDV_OVERSCAN / 100)
 
-// #pragma parameter BLOOM "          Raster bloom %" 0.0 0.0 20.0 1.0
-// #define BLOOM        params.BLOOM     // Bloom overscan percentage
+#pragma parameter GDV_OVERSCAN_X "          Overscan X % -- GDV_OVERSCAN_X" 0 -50 100 0.5
+#define GDV_OVERSCAN_X        (GDV_OVERSCAN + global.GDV_OVERSCAN_X / 100)
+
+#pragma parameter GDV_OVERSCAN_Y "          Overscan Y % -- GDV_OVERSCAN_Y" 0 -50 100 0.5
+#define GDV_OVERSCAN_Y        (GDV_OVERSCAN + global.GDV_OVERSCAN_Y / 100)
+
+#pragma parameter GDV_RASTER_BLOOM_ON "          Raster Bloom ON -- GDV_RASTER_BLOOM_ON" 0 0 1 1
+#define GDV_RASTER_BLOOM_ON        global.GDV_RASTER_BLOOM_ON
+
+#pragma parameter OS "          Raster Bloom Overscan Mode -- OS" 2.0 0.0 2.0 1.0
+#define OS           global.OS
+
+#pragma parameter BLOOM "          Raster Bloom % -- BLOOM" 5.0 0.0 20.0 1.0
+#define BLOOM        global.BLOOM     // Bloom overscan percentage
 
 // #pragma parameter csize "          Corner Size" 0.0 0.0 0.25 0.005
 // #define csize        params.csize     // corner size
@@ -78,7 +100,7 @@
 #pragma parameter GDV_HUMBAR_LINE							" " 0 0 0.001 0.001
 #pragma parameter gdv_humbar_title "[ HUM BAR ]: " 0.0 0.0 0.1 0.1
 
-#pragma parameter barspeed "          Hum Bar Speed" 50.0 3.0 200.0 1.0
+#pragma parameter barspeed "          Hum Bar Speed" 50.0 3.0 200.0 0.2
 
 #pragma parameter barintensity "          Hum Bar Intensity" 0.0 -1.0 1.0 0.01
 
@@ -150,13 +172,18 @@
 #pragma parameter slotms "          Slot Mask Size - Auto | 2K | 4k -- slotms" 1.0 0.0 4.0 1.0
 #define slotms  global.slotms       // Slot Mask Size
 
-#pragma parameter mclip "          Keep Mask effect with clipping -- mclip" 0.0 0.0 1.0 0.05
+#pragma parameter mclip "          Keep Mask Effect with Clipping -- mclip" 0.0 0.0 1.0 0.05
 #define mclip  global.mclip
 
-#pragma parameter smoothmask "          Smooth Masks in bright scanlines" 0.0 0.0 1.0 1.0
+#pragma parameter smoothmask "          Smooth Masks in Bright Scanlines -- smoothmask" 0.0 0.0 1.0 1.0
 #define smoothmask  global.smoothmask
 
-// #pragma parameter gamma_out "Gamma out" 2.4 1.0 5.0 0.05
+#pragma parameter smask_mit "          Mitigate Slotmask Interaction -- smask_mit" 0.0 0.0 1.0 0.05
+#define smask_mit  global.smask_mit
+
+// #pragma parameter gamma_out "          Gamma out" 2.4 1.0 5.0 0.05
+// #define gamma_out    global.gamma_out     // output gamma
+
 #define gamma_out    HSM_GAMMA_OUT_CRT     // output gamma
 
 
@@ -316,11 +343,11 @@ vec3 Mask(vec2 pos, float mx, float mb)
 		if (fract((pos.y + odd)/2.0) < 0.49)
 			line = maskDark;
 
-		pos.x = fract(pos.x/3.0);
+		pos.x = floor(mod(pos.x,3.0));
     
-		if      (pos.x < 0.3) mask.r = maskLight;
-		else if (pos.x < 0.6) mask.g = maskLight;
-		else                    mask.b = maskLight;
+		if      (pos.x < 0.5) mask.r = maskLight;
+		else if (pos.x < 1.5) mask.g = maskLight;
+		else                  mask.b = maskLight;
 		
 		mask*=line;  
 	} 
@@ -328,11 +355,11 @@ vec3 Mask(vec2 pos, float mx, float mb)
 	// Aperture-grille.
 	else if (shadowMask == 2.0)
 	{
-		pos.x = fract(pos.x/3.0);
+		pos.x = floor(mod(pos.x,3.0));
 
-		if      (pos.x < 0.3) mask.r = maskLight;
-		else if (pos.x < 0.6) mask.g = maskLight;
-		else                    mask.b = maskLight;
+		if      (pos.x < 0.5) mask.r = maskLight;
+		else if (pos.x < 1.5) mask.g = maskLight;
+		else                  mask.b = maskLight;
 	} 
 
 	// Stretched VGA style shadow mask (same as prior shaders).
@@ -343,7 +370,7 @@ vec3 Mask(vec2 pos, float mx, float mb)
 
 		if      (pos.x < 0.3) mask.r = maskLight;
 		else if (pos.x < 0.6) mask.g = maskLight;
-		else                    mask.b = maskLight;
+		else                  mask.b = maskLight;
 	}
 
 	// VGA style shadow mask.
@@ -355,7 +382,7 @@ vec3 Mask(vec2 pos, float mx, float mb)
 
 		if      (pos.x < 0.3) mask.r = maskLight;
 		else if (pos.x < 0.6) mask.g = maskLight;
-		else                    mask.b = maskLight;
+		else                  mask.b = maskLight;
 	}
 	
 	// Trinitron mask 5
@@ -375,9 +402,9 @@ vec3 Mask(vec2 pos, float mx, float mb)
 	else if (shadowMask == 6.0)
 	{
 		mask = vec3(0.0);
-		pos.x = fract(pos.x/3.0);
-		if      (pos.x < 0.3) mask.r = 1.0;
-		else if (pos.x < 0.6) mask.g = 1.0;
+		pos.x = floor(mod(pos.x,3.0));
+		if      (pos.x < 0.5) mask.r = 1.0;
+		else if (pos.x < 1.5) mask.g = 1.0;
 		else                    mask.b = 1.0;
 		mask = clamp(mix( mix(one, mask, mcut), mix(one, mask, maskstr), mx), 0.0, 1.0) * dark_compensate;
 	}
@@ -486,12 +513,12 @@ float SlotMask(vec2 pos, float m)
 	pos = floor(pos/slotms);
 	*/
 	float mlen = slotwidth*2.0;
-	float px = fract(pos.x/mlen);
+	float px = floor(mod(pos.x, 0.99999*mlen));
 	float py = floor(fract(pos.y/(2.0*double_slot))*2.0*double_slot);
 	float slot_dark = mix(1.0-slotmask1, 1.0-slotmask, m);
 	float slot = 1.0;
-	if (py == 0.0 && px <  0.5) slot = slot_dark; else
-	if (py == double_slot && px >= 0.5) slot = slot_dark;		
+	if (py == 0.0 && px < slotwidth) slot = slot_dark; else
+	if (py == double_slot && px >= slotwidth) slot = slot_dark;		
 	
 	return slot;
 	}
@@ -522,7 +549,6 @@ float humbar(float pos)
 		return (1.0-global.barintensity) + global.barintensity*pos;
 	}	
 }
-
 
 /* HSM Removed
 float corner(vec2 pos) {
@@ -735,17 +761,41 @@ void main()
 
 	vec2 pos1 = TEX0.xy;
 
-
 	/* HSM Removed
 	vec2 pos  = Warp(texcoord);
 	vec2 pos0 = Warp(TEX0.xy);
 	*/
 
 	// HSM Added
-	vec2 screen_curved_coord = HSM_GetCurvedCoord(SCREEN_COORD, HSM_CRT_CURVATURE_SCALE, SCREEN_ASPECT);
-	vec2 pos = HSM_GetMirrorWrappedCoord(screen_curved_coord);
-	vec2 pos0 = pos;
+	vec2 screen_curved_coord = HSM_GetCRTShaderCurvedCoord(SCREEN_COORD);
 
+	// Screen Curved Coordinate but not Mirrored
+	vec2 screen_curved_coord_with_overscan = HSM_ApplyOverscan(screen_curved_coord, GDV_OVERSCAN_X, GDV_OVERSCAN_Y);
+
+	vec2 pos = HSM_GetMirrorWrappedCoord(screen_curved_coord);
+
+	// Add overscan to mirror wrapped coord
+	pos = HSM_ApplyOverscan(pos, GDV_OVERSCAN_X, GDV_OVERSCAN_Y);
+			
+	// vec2 screen_scale_with_overscan = SCREEN_SCALE * (vec2(GDV_OVERSCAN_X, GDV_OVERSCAN_Y) + 1);
+
+	// Screen Coordinate overscan but without curvature 
+	vec2 screen_coord_with_overscan = HSM_ApplyOverscan(SCREEN_COORD, GDV_OVERSCAN_X, GDV_OVERSCAN_Y);
+
+	if (GDV_RASTER_BLOOM_ON > 0.5)
+	{
+		pos = HSM_ApplyRasterBloomOverscan(pos, OS, BLOOM, lum);
+		screen_curved_coord_with_overscan = HSM_ApplyRasterBloomOverscan(screen_curved_coord_with_overscan, OS, BLOOM, lum);
+		screen_coord_with_overscan = HSM_ApplyRasterBloomOverscan(screen_coord_with_overscan, OS, BLOOM, lum);
+		// screen_scale_with_overscan *= HSM_GetRasterBloomScale(OS, BLOOM, lum);
+
+		if (HHLP_IsOutsideCoordSpace(screen_curved_coord_with_overscan))
+		{
+			FragColor = vec4(0);
+			return;
+		}
+	}
+	
 	// color and bloom fetching
 	vec3 color = COMPAT_TEXTURE(Source,pos1).rgb;
 	vec3  Bloom = HSM_GetCroppedTexSample(BloomPass, pos).rgb;
@@ -792,10 +842,11 @@ if ((abs(global.deconrr) + abs(global.deconrry) + abs(global.deconrg) + abs(glob
 	vec3 orig1 = color;
 	vec3 cmask = one;
 	
-	vec2 maskcoord = gl_FragCoord.yx * 1.000001;
+	vec2 maskcoord = gl_FragCoord.yx * 1.00001;
 	if (notate) maskcoord = maskcoord.yx;
 	
-	float smask = SlotMask(maskcoord, mx);	
+	float smask = SlotMask(maskcoord, mx);
+	smask = clamp(smask + mix(smask_mit, 0.0, min(w3, sqrt(max(max(orig1.r,orig1.g),orig1.b)))), 0.0, 1.0);
 	cmask*= Mask(maskcoord, mx, mb);
 
 	if (mask_layout > 0.5) cmask = cmask.rbg;
@@ -841,7 +892,7 @@ if (abs(bloom) > 0.025)
 	Bloom1 = min(Bloom1*(orig1+color), max(0.5*(colmx + orig1 - color),0.001*Bloom1));
 	Bloom1 = 0.5*(Bloom1 + mix(Bloom1, mix(colmx*orig1, Bloom1, 0.5), 1.0-color));
 	Bloom1 = Bloom1 * mix(1.0, 2.0-colmx, bloom_dist);
-	color = color + abs(bloom) * Bloom1;
+	color = pow(pow(color, vec3(mask_gamma/gamma_in)) + abs(bloom) * pow(Bloom1, vec3(mask_gamma/gamma_in)), vec3(gamma_in/mask_gamma));
 }
 
 	color = min(color, mix(one, cmask1, mclip));
@@ -857,10 +908,24 @@ if (abs(bloom) > 0.025)
 		Bloom = plant(Bloom + Ref + orig1 + Bloom*Bloom*Bloom, min(mbl*mbl,0.75));
 		color = color + 2.0*mix(1.0,w3,0.5*colmx)*mix(one,cmask,0.5)*Bloom*(-halation); }
 
+	float w = 0.25 + 0.60*mix(w3, 1.0, sqrt(colmx));
 	if (smoothmask > 0.5) { w3 = mix(1.0, w3, smoothstep(0.3, 0.6, mx1)); color = max(min(color/w3, 1.0)*w3, min(color,color*(1.0-w3))); }
 
-	Glow = mix(Glow, 0.25*color, 0.7*colmx);
-	if (glow >= 0.0) color = color + 0.5*Glow*glow; else { cmask*=cmask; cmask*=cmask; color = color + (-glow)*cmask*Glow; }
+	if (global.m_glow < 0.5) Glow = mix(Glow, 0.25*color, 0.7*colmx);
+	else
+	{ 
+		maxb = max(max(Glow.r,Glow.g),Glow.b);
+		orig1 = plant(orig1 + 0.001*Ref, 1.0);
+		Bloom = plant(Glow, 1.0);
+		Ref = abs(orig1-Bloom);
+		mx0 = max(max(orig1.g,orig1.g),orig1.b)-min(min(orig1.g,orig1.g),orig1.b);
+		mx2 = max(max(Bloom.g,Bloom.g),Bloom.b)-min(min(Bloom.g,Bloom.g),Bloom.b);		
+		Bloom = mix(maxb*min(Bloom,orig1), w*mix(mix(Glow, max(max(Ref.g,Ref.g),Ref.b)*Glow, max(mx,mx0)), Glow, max(mx0,mx2)*Ref), min(sqrt((1.10-mx0)*(0.10+mx2)),1.0));
+		Glow = mix(global.m_glow_low*Glow, global.m_glow_high*Bloom, pow(colmx, global.m_glow_dist/gamma_in));
+	}
+	
+	if (glow >= 0.0 && global.m_glow < 0.5) color = color + 0.5*Glow*glow;
+	else { if(global.m_glow > 0.5) cmask1 = max(mix(one, cmask1, global.m_glow_mask),0.0); color = color + abs(glow)*cmask1*Glow; }
 
 	/* HSM Removed
 	color = min(color, 1.0);
