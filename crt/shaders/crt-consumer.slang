@@ -8,8 +8,8 @@ layout(push_constant) uniform Push
 } params;
 
 // Parameter lines go here:
-#pragma parameter blurx "Convergence X" 0.25 -2.0 2.0 0.05
-#pragma parameter blury "Convergence Y" -0.15 -2.0 2.0 0.05
+#pragma parameter blurx "Convergence X" 0.25 -4.0 4.0 0.05
+#pragma parameter blury "Convergence Y" -0.15 -4.0 4.0 0.05
 #pragma parameter warpx "Curvature X" 0.03 0.0 0.12 0.01
 #pragma parameter warpy "Curvature Y" 0.04 0.0 0.12 0.01
 #pragma parameter corner "Corner size" 0.01 0.0 0.10 0.01
@@ -409,9 +409,9 @@ void main()
         res = texture(Source, pC4); 
     else
     {
-        vec3 sample1 = texture(Source, vec2(pC4.x + global.blurx / 1000.0, pC4.y - global.blurx / 1000.0)).rgb;
+        vec3 sample1 = texture(Source, vec2(pC4.x + global.blurx / 1000.0, pC4.y - global.blury / 1000.0)).rgb;
         vec3 sample2 = texture(Source, pC4).rgb;
-        vec3 sample3 = texture(Source, vec2(pC4.x - global.blurx / 1000.0, pC4.y + global.blurx / 1000.0)).rgb;
+        vec3 sample3 = texture(Source, vec2(pC4.x - global.blurx / 1000.0, pC4.y + global.blury / 1000.0)).rgb;
         
         vec3 color = vec3(sample1.r * 0.5  + sample2.r * 0.5, 
                           sample1.g * 0.25 + sample2.g * 0.5 + sample3.g * 0.25,
