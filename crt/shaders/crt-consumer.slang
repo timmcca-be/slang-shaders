@@ -30,6 +30,7 @@ layout(push_constant) uniform Push
 #pragma parameter slotms "Slot Mask Size" 1.0 1.0 2.0 1.0
 #pragma parameter GAMMA_IN "Gamma In" 2.5 0.0 4.0 0.1
 #pragma parameter GAMMA_OUT "Gamma Out" 2.2 0.0 4.0 0.1
+#pragma parameter postbr "Post Brightness" 1.3 0.0 2.5 0.02
 #pragma parameter glow "Glow Strength" 0.05 0.0 0.5 0.01
 #pragma parameter Size "Glow Size" 1.0 0.1 4.0 0.05
 #pragma parameter sat "Saturation" 1.1 0.0 2.0 0.05
@@ -79,6 +80,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
     float vpower;
     float vstr;
     float alloff;
+    float postbr;
 } global;
  
 #pragma stage vertex
@@ -453,7 +455,7 @@ void main()
         if (global.sat    != 1.0) color  = saturation(color);
         if (global.corner != 0.0) color *= corner0(pC4);
         if (global.nois   != 0.0) color *= 1.0 + noise(pC4 * 2.0) / global.nois;
-        
+        color*=mix(1.0,global.postbr,lum);
         res = vec4(color, 1.0);
         if (global.contrast != 1.0) res = contrastMatrix(global.contrast) * res;
         if (global.inter > 0.5 && params.SourceSize.y > 400.0 && fract(iTime) < 0.5) res = res * 0.95;
