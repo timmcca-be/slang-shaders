@@ -33,6 +33,7 @@ layout(push_constant) uniform Push
  float OutputGamma;
  float BRIGHTBOOST;
  float SCANLINES;
+ float SHARPER;
 } params;
 
 // Parameter lines go here:
@@ -53,7 +54,8 @@ layout(push_constant) uniform Push
 #pragma parameter SCANLINES "SCANLINES STRENGTH" 0.72 0.0 1.0 0.02
 #define SCANLINES params.SCANLINES 
 
-
+#pragma parameter SHARPER "SHARPER" 0.0 0.0 1.0 1.0
+#define SHARPER params.SHARPER 
 
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -113,11 +115,25 @@ void main()
    vec4 lobes = vec4(fp.x*fp.x*fp.x, fp.x*fp.x, fp.x, 1.0);
 
    vec4 InvX = vec4(0.0);
-// Horizontal cubic filter
+
+
+   if (SHARPER == 0.0) {
+// Horizontal cubic filter - "Catrom"
     InvX.x = dot(vec4( -0.5, 1.0, -0.5, 0.0), lobes);
     InvX.y = dot(vec4(  1.5,-2.5,  0.0, 1.0), lobes);
     InvX.z = dot(vec4( -1.5, 2.0,  0.5, 0.0), lobes);
     InvX.w = dot(vec4(  0.5,-0.5,  0.0, 0.0), lobes);
+}
+
+    else if (SHARPER == 1.0) {
+// Swith to "Hermite" - Sharper, smoothed bilinear     
+    InvX.x = dot(vec4(  0.0, 0.0,  0.0, 0.0), lobes);
+    InvX.y = dot(vec4(  2.0,-3.0,  0.0, 1.0), lobes);
+    InvX.z = dot(vec4( -2.0, 3.0,  0.0, 0.0), lobes);
+    InvX.w = dot(vec4(  0.0, 0.0,  0.0, 0.0), lobes);
+}
+
+
 	
     vec3 color = InvX.x*c10.xyz;
 		 color+= InvX.y*c11.xyz;
