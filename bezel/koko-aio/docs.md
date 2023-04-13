@@ -10,11 +10,6 @@
     Use it if you don't want to blur the image and you still don't like
     jagged or too much pixelated images.
 
-**RGB deconvergence:**
-    Shift R,G,B components separately to mimic channel deconvergence.
-    By varying Red, Green and Blue offsets, the relative component will be
-    shifted column by column, row by row.
-
 **CVBS: NTSC color artifacts: **
     Tries to emulate typical NTSC color artifacting without emulating
     full NTSC coding/decoding pipeline.
@@ -22,12 +17,20 @@
     an accurate emulation (yet?)
     As today, it is enough to emulate rainbowing effects on genesis.
     
+** RF Noise: **
+    Emulates radio frequency noise with a given strength
+    
 **CVBS: Bandwidth limited chroma:**
     Will cause an horizontal chroma bleed which cheaply mimics the effect of
     poor composite video signals.
     It can be used with RGB shifting and image blurring to give the picture
     an ntsc look without dealing with specific encoding/decoding stuffs. 
 
+**Deconvergence:**
+    Shift R,G,B components separately to mimic channel deconvergence.
+    By varying Red, Green and Blue offsets, the relative component will be
+    shifted column by column, row by row.
+    
 **Glow/Blur:**
     Emulate the CRT glowing "feature", so that the brighter areas of
     the image will light their surroundings,
@@ -52,6 +55,7 @@
         When NTSC artifacts emulation is enabled, this option will let you blur
         them more, this would help to selectively blur things like waterfalls
         in Sonic 2.
+        The value you set it will be subtracted from glow horizontal sharpness.
     Blur less NTSC artifacts (min treshold)
         In relation to the previous setting, this allow to blur only the most
         prominent artifacts.
@@ -59,7 +63,7 @@
         This will help you to set the previous 2 values as it will show only
         the artifacts that will modify the blur.
     
-**RGB Masks and/or Darklines:**
+**Masks and/or Darklines:**
     Emulates CRT RGB phosphors (RGB Mask),
     slotmasks and aperturegrille (Darklines).
     
@@ -68,7 +72,7 @@
         you may want to scale this filter by a factor.
     Vmask Strength:
         How much will the RGB mask be visible.
-    . (LoDPI) Green,Magenta -> BGR:
+    . (LoDPI) Green,Magenta -> RGB:
         By exploiting common monitors RGB subpixel order, this causes
         the RGB mask, to be emulated by using just 2 pixels instead of 3.
         Very useful for 1080p (or lower) displays and to keep more brightness.
@@ -125,11 +129,10 @@
         controls how "little" they will look pronunced.
         You can even use a negative value to make the scanline more evident,
         but graphical glitches may occour.
-    Scanlines gap brightness:
-        Controls how much the gap between scanlines is dark.
-    Compensate brightness loss:
-        Will make scanlines brighter, where possible, to compensate for the 
-        loss of brightness given by the dark gap between them.
+    Minimum/Maximum height:
+        Control the scanline thickness, can be used to mitigate moiree.
+    Min->Max Inertia
+        The lower, the thinner scanlines will be used for higher brightness.
     Scanlines bleeding:
         Will cause the scanline itself to light the scanline gap (dark) part. 
         You may use it to keep a good picture brightness level.
@@ -148,13 +151,16 @@
         and avoid graphical glitches.
         If you enable this feature, it is highly recommended to disable darklines.
         Darklines will still used when dealing with interlaced or flickering screens.
-        Type 0 allows you to configure strength and stagger.
+        Type 1 allows you to configure strength and stagger.
                The stagger height will be modulated by the scanline height.
-        Type 1 produces tinner slotmasks, but with fixed stagger.
-               The stagger height will be modulated by the scanline height.
+        Type 2 produces thinner slotmasks, (dark gaps more pronunced),
+               but with fixed offset.
+               The stagger height will still be modulated by the scanline height.
+               This is intended to give pixels a sparkling point.
+               Works best with scanline heights in range [0.5..0.7] 
         Type 3 is fixed and produces heavier and thinner slotmasks without visible scanlines.
     Slotmask strength
-        The strenght of the slotmask (available on type 1 and 2 only)
+        The strength of the slotmask
     . Offset
         This is the slotmask offset/stagger, (available on type 1 only)
         Keep it around 79 or all the way to max
@@ -197,6 +203,8 @@
         control how much the display is curved along its axes.
     Corner radius, Corner sharpness:
         Control the "smoothness" of the display corners.
+    Cut curvature ears;
+        If you see weird image repetition try this.
         
 **Bezel:**
     Draws a monitor frame with simulated reflections from the game content.
@@ -212,20 +220,27 @@
     
     Straight
         Use a straight bezel instead of a curved one.
+    Inner zoom:
+        Allows to shrink or expand the game content to fit the monitor frame.
+        When integer scaling is enabled, this is ignored.
+    Frame zoom:
+          Allows to shrink or expand the monitor frame to fit the game content.
     Bezel color (red,green,blue) and contrast:
         Allows to choose the color of the monitor frame.
-    Image zoom:
-        Allows to shrink or expand the game content to fit the monitor frame.
-    Frame zoom:
-        Allows to shrink or expand the monitor frame to fit the game content.
-    Image Border:
-        Draws a black border around the game content.
-    Sharp reflections
+    Reflections strength
+        The amount of reflections
+    Reflections sharpness
         Modulates from totally blurred to totally sharp reflection appearance.
+    Reflections roughness
+        The amount of material roughness in reflection area
+    Diffusion strength
+        Mix an amount of high blurred reflection to simulate light diffusion
+    Specularity strength
+        The amount of specular reflection
+    Darken corners
+        How much the bezel corners should be darkened
+    
 
-**Global shift/zoom image:**
-    Zoom and shift everything on screen, but background pictures.
-        
 **Backgound image:**
     Draws an image on screen picked from the "textures" shader subdirectory,
     named: background.png<br>
@@ -245,12 +260,26 @@
         This could be needed when dealing with vertical games.
         Use -1 to let the shader try to guess if the rotation is needed.
     Wrap mode:
+        This feature is static, to use it 
+        you have to manually enable it by removing the leading: "//"
+        from "//#define ALLOW_BG_IMAGE_TEXTURE_WRAP_IN_SHADER" in config.inc
+        
         What to do outside the image:
         0  Mirrored repeat because so is configured in main .slangp.
         1  Clamp to border and it means black.
         2  Clamp to edge and means that it repeats the edge color.
         3  Plain repeat without mirroring.
 
+        
+**Backdrop support:**
+    Some old arcades used a mirror trick to overlay the
+    game content over an high definition printed image.<br>
+    The image used by default, picked from the "textures" shader subdirectory,
+    is named: boothill.jpg<br>
+        Shift(Zoom) Backdrop over X(Y) axis:
+            move or zoom the whole background image.
+    
+        
 **Ambient light leds:**
     Emulates the presence of led strips under the monitor that lights the
     surroundings according to the edges of the game content.
@@ -270,7 +299,32 @@
         Note: To avoid burn-in effects, keep Light Falloff + Led power not too high.
     Colorize Bezel
         Allow to add an amount of the ambient light over the bezel frame
+    Colorization size
+        How much the ambient light should bleed over the monitor.
+        Pushing this too high would make it bleed over the tube.
+        This is not supported.
+    Back/Foreground image alpha blend
+        When displaying background or foreground images, ambient lights are
+        shown on their transparent areas (alpha channel)
+        Switching this you can choose if you want to emulate leds:
+        under the image (0/mix) or over the image (1/add)
+    Always colorize Back/Foreground image (add mode only)
+        When "Back/Foreground image alpha blend" is set to 1/add,
+        you can choose to always colorize the foreground image by a certain amount.
+        This can be used to produce big haloes all around the tube.
+        This internally works by adding the amount of your choice to the alpha channel
+        of the foreground image.
+        
+**Luminosity dependant zoom:**
+    On older CRT monitors, the picture gets bigger when the image was brighter.
 
+**Vignette:**
+    Will cause uneven brightness of the image, more at the center,
+    less at the edges.
+    
+**Spot:**
+    Simulates external light reflected by the monitor glass.
+            
 **Aspect Ratio:**
     When using effects that need Retroarch aspect ratio option
     to be set to "full", you have to provide the source aspect
@@ -293,21 +347,41 @@
         As long as Aspect Ratio Numerator is positive, this will
         be used as the denominator of the fraction.
 
-**Luminosity dependant zoom:**
-    On older CRT monitors, the picture gets bigger when the image was brighter.
+**Global shift/zoom image:**
+    Zoom and shift everything on screen, but background pictures.
 
-**Vignette:**
-    Will cause uneven brightness of the image, more at the center,
-    less at the edges.
+**Override content geometry:**
+    Contrary to the global aspect ratio control, this changes only the game geometry.
+    Bezel stays the same.
     
-**Spot:**
-    Simulates external light reflected by the monitor glass.
+    Integer scale: Game content zoom height is rounded to nearest integer.
+    Maximum integer scale: Dont allow integer scaling more than this
+                     * beware: the following options in this group
+                       overrides the integer scale.
+    Aspect: Change aspect ratio.
+    Vertical/Horizontal position: Shifts the game position
+    Zoom: Change the size
 
+**Tilt:**
+    Put the bezel and the game content into perspective.
+    
+    Tilt along X(Y) axis:
+        Rotate the image in space
+    Fov: Modulates the field of view
+    Bezel multiplier:
+        Can be used to adjust the bezel rotation
+        in relation to the game tilt amount
+    
+    
 **Alternate line blanking:**
     CRT monitors \*real\* refresh was amazing, today is just "meh" in most cases.
-    This emmulates the low pixel persistance of CRT monitors 
+    This emulates the low pixel persistance of CRT monitors 
     and reduces the motion blur, typical of LCD displays, by blanking even/odd
     screen lines on even/odd frames, by sacrificing image brightness, ofc.
+    
+    This feature is static, to use it 
+    you have to manually enable it by removing the leading: "//"
+    from "//#define ALLOW_ALT_BLANK" in config.inc
     
     Frame insertion strength:
         How much the line will be blanked.
@@ -315,17 +389,7 @@
         You can blank single line or a group of them at once.
         See what performs better on your display.
 
-**Backdrop support:**
-    Some (not so much) old arcades used a mirror trick to overlay the
-    game content over an high definition printed image.<br>
-    koko-aio supports them but you will explicitely need to enable<br>
-    that feature in config.inc file, by uncommenting a string this way:<br>
-    //#define STATIC_SUPPORT_BACKDROP 1.0 <br>
-    becomes: <br>
-    #define STATIC_SUPPORT_BACKDROP 1.0 <br>
-    You can only combine the static backdrop with images <br>
-    that are painted over the screen.<br>
-    If you need to zoom the game content only, use the global zoom controls.
+
 
 
 

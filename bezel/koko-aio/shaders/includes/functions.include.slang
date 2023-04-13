@@ -1,5 +1,71 @@
+// mix_step returns a or b, depending on the mix value.
+// mix is supposed to have just 2 values, 1.0 or 0.0;
+		vec2 mix_step(vec2 a, vec2 b, float mix){
+			return (a * (1 - mix)) + 
+				(b * mix) ;
+		}
+		vec3 mix_step(vec3 a, vec3 b, float mix){
+			return (a * (1 - mix)) + 
+				(b * mix) ;
+		}
+		vec4 mix_step(vec4 a, vec4 b, float mix){
+			return (a * (1 - mix)) + 
+				(b * mix) ;
+		}
+		float mix_step(float a, float b, float mix){
+			return (a * (1 - mix)) + 
+				(b * mix) ;
+		}
 
 
+//REFLECTION RELATED START
+	float circle_smooth(vec2 coords, vec2 middle, float f_radius, float FALLOFF) {
+	//Draw a circle with smoothed borders:
+	float fdistance=distance(middle, vec2(coords.x, coords.y));
+	float circle = (1-smoothstep(f_radius-FALLOFF, f_radius+FALLOFF, fdistance));
+	return circle;
+	}
+
+	float square_smooth(vec2 co, vec2 corner, float size, float smoothshade) {
+	//Draws a square with smooth borders:
+	vec4 rect = vec4(corner.x, corner.y, corner.x+size, corner.y+size);
+	vec2 hv = smoothstep(rect.xy - smoothshade, rect.xy, co) * smoothstep(co - smoothshade, co, rect.zw);
+	return  hv.x * hv.y;
+	}
+
+	float corners_shade(vec2 co, float size_multiplier){
+	//Draws 4 smooth squares or circles in the corners.
+	//They are intended to modulate the blur radius and the strength of the reflection.
+	
+	/*
+	vec4 circles;
+	float circle_radius = size; //0.13?
+	float circle_falloff = smoothsize; //0.05?
+	float circle_power =2.0;
+	circles.x = circle_smooth(co, vec2(0.0,0.0), circle_radius, circle_falloff) * circle_power;
+	circles.y = circle_smooth(co, vec2(0.0,1.0), circle_radius, circle_falloff) * circle_power;
+	circles.z = circle_smooth(co, vec2(1.0,0.0), circle_radius, circle_falloff) * circle_power;
+	circles.w = circle_smooth(co, vec2(1.0,1.0), circle_radius, circle_falloff) * circle_power;
+		
+	float circle = max(max(max(circles.x, circles.y), circles.z), circles.w);
+	circle = min(circle, 1.0);
+	circle = 1-circle;
+	
+	return circle;
+	*/      
+	vec4 squares;
+	float squaresize = BEZEL_REFL_CORNER_BLANK_SIZE * size_multiplier;
+	float squarefade = BEZEL_REFL_CORNER_BLANK_SHADE * size_multiplier;
+	//(vec2 co, vec2 corner, float size, float smoothshade) {
+	squares.x = square_smooth(co, vec2(0.0,0.0), squaresize, squarefade);
+	squares.y = square_smooth(co, vec2(1.0 - squaresize, 0.0), squaresize, squarefade);
+	squares.z = square_smooth(co, vec2(0.0, 1-squaresize), squaresize, squarefade);
+	squares.w = square_smooth(co, vec2(1-squaresize, 1-squaresize), squaresize, squarefade);
+	return max(max(max(squares.x, squares.y), squares.z), squares.w);
+	}
+//REFLECTION RELATED ENDS
+
+	
 vec3 pixel_push_luminance(vec3 c, float strength) {
 	//if (strength == 0.0) return c; //lighter without the check.
 	float whiteness = max(max(c.r, c.g), c.b);
@@ -15,13 +81,14 @@ vec3 apply_fuzzy_main_pass(vec3 color) {
    if (DO_HALO == 1.0)
       color += pow(color,vec3(HALO_GAMMA))*HALO_POWER;
    if (DO_SCANLINES == 1.0)
-      color *=  mix(0.5 + (SCANLINE_DARK*0.5), 1.0, SCANLINE_COMPENSATION);
+      color *=  0.5 + (SCANLINE_DARK*0.5);
    if (DO_CCORRECTION == 1.0)
       color = pow(color, vec3(GAMMA_OUT));
    if (DO_VIGNETTE == 1.0)
       color *= 0.8 * (V_POWER);
    return color;
 }
+
 
 
 vec2 offsets_from_float(float in_param, int range){
@@ -58,12 +125,21 @@ vec2 zoom(vec2 in_coords, float zoom_factor) {
    return (in_coords/zoom_factor)-off;
 }
 
+float zoom1D(float in_coord, float zoom_factor) {
+   float off = 1.0/(zoom_factor*2.0) - 0.5;
+   return (in_coord/zoom_factor)-off;
+}
+
 vec2 zoomxy(vec2 in_coords, vec2 zoom_factor) {
    vec2 off = 1.0/(zoom_factor*2.0) - 0.5;
    return (in_coords/zoom_factor)-off;
 }
 
 vec2 zoomout_coords(vec2 in_coords, float zoom_out, float aspect) {
+   // to convert to standard zoom:
+   // zoomout_coords(x) = zoom( 1/(x+1) );
+
+	
    vec2 zoom   = vec2( 1 + zoom_out, 
                        1 + (zoom_out * aspect) 
                      );
@@ -97,8 +173,25 @@ vec2 scale_to_range_vec2(vec2 x, float dmin, float dmax) {
     return ( (dmax-dmin) * x ) + dmin;
 }
 
-#define RND_A 12.9898
-#define RND_B 78.233
+float map_range(float value, float min_in, float max_in, float min_out, float max_out) {
+	//Scales value in [min_in - max_in] to [min_out - max_out]
+	return min_out + (value - min_in) * (max_out - min_out) / (max_in - min_in);
+}
+
+
+vec3 apply_contrast_brightness(vec3 c, float contrast, float brightness) {
+   return scale_to_range_vec3(c, -contrast, 1+contrast) + brightness;
+}
+
+float apply_contrast_brightness(float c, float contrast, float brightness) {
+   return scale_to_range(c, -contrast, 1+contrast) + brightness;
+}
+
+float round_step(float f, float p) {
+	return floor(f*p)/p;
+}
+
+#define VEC2_RND_A_B vec2(12.9898, 78.233)
 #define RND_C 43758.5453
 
 float random(float power, vec2 seed) {
@@ -106,27 +199,36 @@ float random(float power, vec2 seed) {
     //https://github.com/svofski/CRT
     //Copyright (c) 2016, Viacheslav Slavinsky
     //All rights reserved.
-    float dt = dot(seed.xy, vec2(RND_A, RND_B));
+    float dt = dot(seed.xy, VEC2_RND_A_B);
     float sn = mod(dt,3.14);
 
     float noise_out = fract(sin(sn) * RND_C);
-    //noise_out = clamp(noise_out, -power, power);
+
+    noise_out = scale_to_range(noise_out, -power, power);
+    return noise_out;
+}
+
+//The following produces weird results when with dynamic seed like framecount.
+float random_fast(float power, vec2 seed) {
+	float noise_out = fract(sin(dot(seed.xy, VEC2_RND_A_B)) * RND_C);
     noise_out = scale_to_range(noise_out, -power, power);
     return noise_out;
 }
 
 
+
 //CURVATURE
 	#define corner_aspect vec2(1.0,  0.75)
+	float fn_border(vec2 coord) {
+		coord = (coord - vec2(0.5)) + vec2(0.5, 0.5);
+		coord = min(coord, vec2(1.0) - coord) * corner_aspect;
+		vec2 cdist = vec2(GEOM_CORNER_SIZE);
+		coord = (cdist - min(coord, cdist));
+		float dist = sqrt(dot(coord, coord));
+		return clamp((cdist.x - dist)*GEOM_CORNER_SMOOTH, 0.0, 1.0);
+	}
+	
 	float border(vec2 coord) {
-		//if (GEOM_CORNER_SIZE < 0.02) {
-			/*float fout = float(coord.x > 0.0 &&
-					    coord.y > 0.0 &&
-					    coord.x < 1.0 &&
-					    coord.y < 1.0
-				);
-			return fout;
-		//}*/
 		coord = (coord - vec2(0.5)) + vec2(0.5, 0.5);
 		coord = min(coord, vec2(1.0) - coord) * corner_aspect;
 		vec2 cdist = vec2(GEOM_CORNER_SIZE);
@@ -151,7 +253,9 @@ float random(float power, vec2 seed) {
 		// Transform coordinates to range [-1, 1]
 		uv = uv * 2.0 - 1.0;
 		vec2 pow_exp = 1.0/(1.0+vec2(wx, wy) * 0.2 ) ;
-		float curvedCoordsDistance = length(uv);
+		//float curvedCoordsDistance = length(uv);
+		float curvedCoordsDistance = sqrt(uv.x*uv.x+uv.y*uv.y);
+		curvedCoordsDistance = clamp(curvedCoordsDistance, 0.0, 1.4142);
 		vec2 pow_base = vec2(1.0-(curvedCoordsDistance/1.4142135623730950488016887242097));
 		pow_base = abs(pow_base); // <-- this way intel and nvidia (probably amd) acts the same.
 		uv /= curvedCoordsDistance;
@@ -160,15 +264,45 @@ float random(float power, vec2 seed) {
 		// Transform coordinates back to [0, 1]
 		return uv* 0.5 + 0.5;
 	}
+
 	
-	vec2 Warp_fast(vec2 uv, vec2 v_exp, vec2 arg2) {
+	
+vec2 Warp_try(vec2 pos, float warpX, float warpY) {
+	
+/*	float dist = length(pos-vec2(0.5))*10;
+	float c = 1 - clamp(dist, 0.0,1.0);
+	pos=zoom(pos, c);
+	return pos;
+	
+	pos=zoom(pos, 1.006);
+	*/
+	float k=0.5; //0.1
+	warpX*=k;
+	warpY*=k;
+	
+	//pos.x=zoom1D(pos.x, 1+warpX*0.16);
+	float powexp = 1.8;
+    pos  = pos*2.0-1.0;    
+    pos *= vec2(1.0 + pow(pos.y, powexp)*warpX, 1.0 + pow(pos.x, powexp)*warpY);
+    
+    return pos*0.5 + 0.5;
+	
+	
+	
+	
+}
+	
+	vec2 Warp_fast(vec2 uv, vec2 v_exp, vec2 arg2, float cut_ears) {
 		/*This version is exact and faster than the other implementation,
 		 * Just because it needs precalculed arguments that can live in
 		 * vertex shader
 		 */
 		// Transform coordinates to range [-1, 1]
 		uv = uv * 2.0 - 1.0;
-		float curvedCoordsDistance = length(uv);
+		//float curvedCoordsDistance = length(uv);
+		
+		float curvedCoordsDistance = sqrt(uv.x*uv.x+uv.y*uv.y);
+		curvedCoordsDistance = min(curvedCoordsDistance, cut_ears);
 		vec2 pow_base = vec2(1.0-(curvedCoordsDistance/1.4142));
 		pow_base = abs(pow_base); // <-- this way intel and nvidia (probably amd) acts the same.
 		uv /= curvedCoordsDistance;
@@ -203,7 +337,7 @@ float random(float power, vec2 seed) {
 		#ifdef STATIC_SUPPORT_BACKDROP
 		return true;
 		#else
-		return (DO_AMBILIGHT + DO_BG_IMAGE > 0.0);
+		return (DO_AMBILIGHT + DO_BG_IMAGE + DO_BACKDROP > 0.0);
 		#endif
 	}
 
@@ -284,6 +418,70 @@ float random(float power, vec2 seed) {
 
 		vec2 scale_coord=vec2(pTexCoord.x*scale_x - offset_x , pTexCoord.y*scale_y - offset_y);
 		return scale_coord;
+	}
+	
+	vec2 integer_scale(vec2 in_coords, float target_aspect, bool is_rotated) {
+		vec2 izoom;
+
+		float raw_in_aspect = params.OriginalSize.x/params.OriginalSize.y;
+		float adapted_aspect = target_aspect /raw_in_aspect;
+		in_coords.x = zoom1D(in_coords.x, adapted_aspect);
+
+		if (!is_rotated) {
+			//This is 1X integer zoom:
+			izoom = params.OriginalSize.xy / global.FinalViewportSize.xy;
+			//Find the maximum zoom allowed
+			float int_zoom = floor(global.FinalViewportSize.y / params.OriginalSize.y );
+			int_zoom = clamp(int_zoom, 1.0, GAME_GEOM_INT_SCALE_MAX);
+			izoom *= int_zoom;
+		} else {
+			izoom = params.OriginalSize.xy / global.FinalViewportSize.yx;
+			float int_zoom = floor(global.FinalViewportSize.y / (params.OriginalSize.x*adapted_aspect) );
+			int_zoom = clamp(int_zoom, 1.0, GAME_GEOM_INT_SCALE_MAX);
+			izoom *= int_zoom;
+		}
+		return zoomxy(in_coords, izoom);
+	}
+
+	float get_BEZEL_INNER_ZOOM() {
+		/*if (GAME_GEOM_INT_SCALE == 1.0 && DO_GAME_GEOM_OVERRIDE == 1.0)
+			return 0.0;
+		else
+			return BEZEL_INNER_ZOOM;
+		*/
+		//unbranched versions:
+		return BEZEL_INNER_ZOOM * (1 - DO_GAME_GEOM_OVERRIDE * GAME_GEOM_INT_SCALE);
+		
+		//117.2
+		//return BEZEL_INNER_ZOOM * float( GAME_GEOM_INT_SCALE != 1.0 || DO_GAME_GEOM_OVERRIDE != 1.0  );
+	}
+
+	bool do_integer_scale() {
+		return DO_GAME_GEOM_OVERRIDE == 1.0 && GAME_GEOM_INT_SCALE == 1.0;
+	}
+
+
+	vec2 content_geom_override(vec2 co, float aspect, float in_aspect, float vshift, float hshift, float out_zoom){
+		//Aspect
+		//float bUse_original_aspect = float(aspect < 0.01);
+		float bUse_custom_aspect = step(0.01, aspect);
+
+		float scale_y;
+		/*if (aspect > 0.01) 
+			scale_y = aspect/in_aspect;
+				else
+			scale_y = 1.0;
+		*/
+		//Unbranched previous:
+		scale_y = mix_step(1.0, aspect/in_aspect, bUse_custom_aspect );
+		
+		float offset_y = (0.5 * scale_y ) - 0.5 ;
+		co.y = co.y*scale_y - offset_y;
+		//shift
+		co.y -= vshift/10.0;
+		co.x -= hshift/10.0;
+		//zoom
+		return zoom(co, out_zoom);
 	}
 	
 //Blur/Glow
@@ -419,6 +617,65 @@ float rgb_to_gray(vec3 rgb) {
 	}
 	*/
 
+	
+vec3 hsv2rgb(vec3 c){
+	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+	vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+	return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+#define eps10 1.0e-10
+vec3 rgb2hsv(vec3 c){
+	vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+	vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+	vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+
+	float d = q.x - min(q.w, q.y);
+	return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + eps10)), d / (q.x + eps10), q.x);
+}
+	
 float get_dyn_zoom(sampler2D tex) {
 	return 1.0 + (texture(tex, vec2(0.75,0.75)    ).a/ DYNZOOM_FACTOR) ;
+}
+
+
+vec2 tilt(vec2 co, float is_rotated, vec2 tilt) {
+
+	vec2 r_tilt = vec2( mix_step(tilt.x, tilt.y, is_rotated),
+	                    mix_step(tilt.y, -tilt.x, is_rotated)
+);
+	
+	vec2 tilt_min = 1 - r_tilt;
+	vec2 tilt_max = 1 + r_tilt;
+	
+	// X Tilt
+		float tilt_x_range = scale_to_range(co.y, tilt_min.x, tilt_max.x);
+		co = vec2( zoom1D(co.x, tilt_x_range),
+		           zoom1D(co.y, tilt_x_range)
+			);
+
+	// Y Tilt
+		float tilt_y_range = scale_to_range(co.x, tilt_min.y, tilt_max.y);
+		co = vec2( zoom1D(co.x, tilt_y_range),
+		           zoom1D(co.y, tilt_y_range)
+			);
+	
+	// Aply FOV;
+		vec2 fov = mix(vec2(1.0), vec2(TILT_FOV), abs( tilt.xy ));
+		co = zoomxy(co, mix_step(fov.yx, fov.xy, is_rotated));
+
+		co.xy += mix_step(tilt.yx, -tilt.xy, is_rotated) * 0.4;
+		
+	return co;
+
+}
+	
+bool is_first_outside_rect(vec2 point, vec4 rect) {
+	return (point.x < rect.x || point.x > rect.z ||
+			point.y < rect.y || point.y > rect.w) ;
+}
+
+bool is_first_inside_rect(vec2 point, vec4 rect) {
+	return (point.x >= rect.x && point.x < rect.z &&
+			point.y >= rect.y && point.y < rect.w) ;
 }
