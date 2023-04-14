@@ -98,6 +98,7 @@ layout(location = 4) in float vNTSC_weights[NTSC_FILTER_WIDTH_MAX];
 layout(location = 0) out vec4 FragColor;
 
 layout(set = 0, binding = 2) uniform sampler2D Source;
+//layout(set = 0, binding = 3) uniform sampler2D ntsc_passFeedback;
 
 
 //	Colorspace conversion matrix for YIQ-to-RGB
@@ -110,17 +111,6 @@ const mat3 RGB2YIQ = mat3(
          0.5870, -0.2744, -0.5229,
          0.1140, -0.3216, 0.3114);
 
-
-
-#define eps10 1.0e-10
-vec3 rgb2hsv(vec3 c){
-   vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-   vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
-   vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
-
-   float d = q.x - min(q.w, q.y);
-   return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + eps10)), d / (q.x + eps10), q.x);
-}
 
 #define pi10 pi*10
 #define PHASE_SHIFT_FOR_BLUR_K pi/3
@@ -160,8 +150,10 @@ vec4 ntscdec(vec2 uv) {
    return vec4(YIQ_result * YIQ2RGB, artifacts_mask);
 }
 
-#define W vec3(0.2125, 0.7154, 0.0721)
 
+
+
+#define W vec3(0.2125, 0.7154, 0.0721)
 vec3 color_tools(vec3 pixel_out) {
 //Apply color corrections to input signal.
 
@@ -176,7 +168,7 @@ vec3 color_tools(vec3 pixel_out) {
 
    //Modify contrast and brightness
    if (CONTRAST != 0.0 || BRIGHTNESS != 0.0)
-      pixel_out.rgb = scale_to_range_vec3(pixel_out.rgb, -CONTRAST, 1+CONTRAST) + BRIGHTNESS;
+      pixel_out.rgb = apply_contrast_brightness(pixel_out.rgb, CONTRAST, BRIGHTNESS);
 
    //Modify color temperature
    if (TEMPERATURE != 6500.0) pixel_out.rgb = pixel_out.rgb * vTemperature_rgb;
@@ -210,7 +202,9 @@ void main() {
       pixel_out = pixel_out_vec4.rgb;
 
       artifacts = pixel_out_vec4.a;
-
+      //artifacts = mix(artifacts, texture(ntsc_passFeedback, vTexCoord).a, 0.5);  <-- this helps
+//FragColor = vec4(artifacts); return;
+      
 /*
       //artifacts = pow(artifacts, IN_GLOW_NTSC_ARTF_TRSH * 8.0);
       artifacts = artifacts * IN_GLOW_NTSC_ARTF_MULT;
@@ -225,6 +219,10 @@ void main() {
    if (DO_CCORRECTION == 1.0)
       pixel_out = color_tools(pixel_out);
 
+   
+   
+   
+   
    FragColor = vec4(pixel_out, artifacts);
 
 
