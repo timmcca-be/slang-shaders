@@ -35,7 +35,7 @@ layout(location = 1) out vec2 omega;
 void main()
 {
    gl_Position = global.MVP * Position;
-   vTexCoord = TexCoord;
+   vTexCoord = TexCoord*1.0001;
    
    omega = vec2(pi * params.OutputSize.x, 2.0 * pi * params.SourceSize.y);
 }
