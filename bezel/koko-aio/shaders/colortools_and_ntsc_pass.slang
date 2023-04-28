@@ -17,30 +17,6 @@ layout(location = 4) out float vNTSC_weights[NTSC_FILTER_WIDTH_MAX];
 #include "includes/functions.include.slang"
 
 
-vec3 kelvin2rgb(float k) {
-   //Convert kelvin temperature to rgb factors
-   k = clamp(k,1000,40000);
-   k=k/100.0;
-   float tmpCalc;
-    vec3 pixel_out;
-   if (k<=66) {
-      pixel_out.r = 255;
-      pixel_out.g = 99.47080258612 * log(k) - 161.11956816610;
-   } else {
-      pixel_out.r = 329.6987274461 * pow(k - 60 ,-0.13320475922);
-      pixel_out.g = 288.12216952833 * pow(k-60, -0.07551484921);
-   }
-
-   if (k >= 66)
-      pixel_out.b = 255;
-   else if (k<=19)
-      pixel_out.b = 0;
-   else
-      pixel_out.b = 138.51773122311 * log(k - 10) - 305.04479273072;
-
-   return pixel_out/255.0;
-}
-
 /* hann() sinc() functions by xot:
  * copyright (c) 2017-2018, John Leffingwell
  * license CC BY-SA Attribution-ShareAlike
@@ -98,7 +74,7 @@ layout(location = 4) in float vNTSC_weights[NTSC_FILTER_WIDTH_MAX];
 layout(location = 0) out vec4 FragColor;
 
 layout(set = 0, binding = 2) uniform sampler2D Source;
-//layout(set = 0, binding = 3) uniform sampler2D ntsc_passFeedback;
+layout(set = 0, binding = 3) uniform sampler2D colortools_and_ntsc_passFeedback;
 
 
 //	Colorspace conversion matrix for YIQ-to-RGB
@@ -151,31 +127,6 @@ vec4 ntscdec(vec2 uv) {
 }
 
 
-
-
-#define W vec3(0.2125, 0.7154, 0.0721)
-vec3 color_tools(vec3 pixel_out) {
-//Apply color corrections to input signal.
-
-   //Push luminance without clipping
-   pixel_out = pixel_push_luminance(pixel_out,LUMINANCE);
-
-   //Modify saturation
-   if (!(SATURATION == 1.0)) {
-      vec3 intensity = vec3(dot(pixel_out.rgb, W));
-      pixel_out.rgb = mix(intensity, pixel_out.rgb, SATURATION);
-   }
-
-   //Modify contrast and brightness
-   if (CONTRAST != 0.0 || BRIGHTNESS != 0.0)
-      pixel_out.rgb = apply_contrast_brightness(pixel_out.rgb, CONTRAST, BRIGHTNESS);
-
-   //Modify color temperature
-   if (TEMPERATURE != 6500.0) pixel_out.rgb = pixel_out.rgb * vTemperature_rgb;
-   return pixel_out;
-}
-
-
 vec3 debug() {
    vec3 pixel_debug;
    float blink_time = 120;
@@ -190,7 +141,6 @@ void main() {
 
    //FragColor = vec4(debug(), 1.0); return;
 
-
    //This will go into alpha channel to make glow aware of it and blur more.
    //It could be configurable.
    float artifacts = 0.0;
@@ -202,7 +152,7 @@ void main() {
       pixel_out = pixel_out_vec4.rgb;
 
       artifacts = pixel_out_vec4.a;
-      //artifacts = mix(artifacts, texture(ntsc_passFeedback, vTexCoord).a, 0.5);  <-- this helps
+      //artifacts = mix(artifacts, texture(colortools_and_ntsc_passFeedback, vTexCoord).a, 0.5);  <-- this helps
 //FragColor = vec4(artifacts); return;
       
 /*
@@ -217,10 +167,24 @@ void main() {
    }
 
    if (DO_CCORRECTION == 1.0)
-      pixel_out = color_tools(pixel_out);
+      pixel_out = color_tools(pixel_out, vTemperature_rgb);
 
    
    
+   if (DO_DOT_MATRIX + DOT_M_MBLUR_STR > 1.0) {
+      vec3 feedback = texture(colortools_and_ntsc_passFeedback, vTexCoord).rgb;
+      
+      vec3 m_blur_adapted = vec3(DOT_M_MBLUR_STR);
+      if (DOT_M_MBLUR_MODE > 0.0) {
+         vec3 adaption = mix_step (pixel_out - feedback,
+                                   feedback - pixel_out,
+                                   DOT_M_MBLUR_MODE -1);
+         //adaption = mix_step(adaption, -adaption, DOT_M_MBLUR_MODE -1);
+         m_blur_adapted *= clamp( adaption, 0.0, 1.0 );
+         m_blur_adapted = pow(m_blur_adapted, vec3(0.25));
+      }
+      pixel_out = mix(pixel_out, feedback,          m_blur_adapted  );
+   }
    
    
    FragColor = vec4(pixel_out, artifacts);
