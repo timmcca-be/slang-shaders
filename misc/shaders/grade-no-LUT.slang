@@ -74,10 +74,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
     float g_satr;
     float g_satg;
     float g_satb;
-    float LUT_Size1;
-    float LUT1_toggle;
-    float LUT_Size2;
-    float LUT2_toggle;
 } global;
 
 /*
@@ -113,10 +109,10 @@ layout(std140, set = 0, binding = 0) uniform UBO
 */
 
 
-#pragma parameter g_signal_type  "Signal Type (0:RGB 1:Composite)"                           1.0  0.0 1.0 1.0
-#pragma parameter g_crtgamut     "Phosphor (-2:CRT-95s -1:P22-80s 1:P22-90s 2:NTSC-J 3:PAL)" 2.0 -3.0 3.0 1.0
+#pragma parameter g_signal_type  "Signal Type (0:RGB 1:Composite)"                           0.0  0.0 1.0 1.0
+#pragma parameter g_crtgamut     "Phosphor (-2:CRT-95s -1:P22-80s 1:P22-90s 2:NTSC-J 3:PAL)" 0.0 -3.0 3.0 1.0
 #pragma parameter g_space_out    "Diplay Color Space (-1:709 0:sRGB 1:DCI 2:2020 3:Adobe)"   0.0 -1.0 3.0 1.0
-#pragma parameter g_Dark_to_Dim  "Dark to Dim adaptation"                                    1.0  0.0 1.0 1.0
+#pragma parameter g_Dark_to_Dim  "Dark to Dim adaptation"                                    0.0  0.0 1.0 1.0
 
 // Analogue controls
 #pragma parameter g_hue_degrees  "CRT Hue"              0.0 -360.0 360.0  1.0
@@ -130,16 +126,16 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter g_CRT_br       "CRT Beam Red"         1.0    0.0   1.2  0.01
 #pragma parameter g_CRT_bg       "CRT Beam Green"       1.0    0.0   1.2  0.01
 #pragma parameter g_CRT_bb       "CRT Beam Blue"        1.0    0.0   1.2  0.01
-#pragma parameter g_vignette     "Vignette Toggle"      1.0    0.0   1.0  1.0
-#pragma parameter g_vstr         "Vignette Strength"    50.0   0.0  50.0  1.0
-#pragma parameter g_vpower       "Vignette Power"       0.50   0.0   0.5  0.01
+#pragma parameter g_vignette     "Vignette Toggle"      0.0    0.0   1.0  1.0
+#pragma parameter g_vstr         "Vignette Strength"    40.0   0.0  50.0  1.0
+#pragma parameter g_vpower       "Vignette Power"       0.20   0.0   0.5  0.01
 
 // Digital controls
 #pragma parameter g_lum_fix      "Sega Luma Fix"        0.0  0.0 1.0 1.0
 #pragma parameter g_lum          "Brightness"           0.0 -0.5 1.0 0.01
 #pragma parameter g_cntrst       "Contrast"             0.0 -1.0 1.0 0.05
 #pragma parameter g_mid          "Contrast Pivot"       0.5  0.0 1.0 0.01
-#pragma parameter wp_temperature "White Point"          8604.0 5004.0 12004.0 100.0
+#pragma parameter wp_temperature "White Point"          6504.0 5004.0 12004.0 100.0
 #pragma parameter g_sat          "Saturation"           0.0 -1.0 1.0 0.01
 #pragma parameter g_vibr         "Dullness/Vibrance"    0.0 -1.0 1.0 0.05
 #pragma parameter g_satr         "Hue vs Sat Red"       0.0 -1.0 1.0 0.01
@@ -158,10 +154,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter gb             "Green-Blue Tint"      0.0 -1.0 1.0 0.005
 #pragma parameter br             "Blue-Red Tint"        0.0 -1.0 1.0 0.005
 #pragma parameter bg             "Blue-Green Tint"      0.0 -1.0 1.0 0.005
-#pragma parameter LUT_Size1      "LUT Size 1"           32.0 8.0 64.0 16.0
-#pragma parameter LUT1_toggle    "LUT 1 Toggle"         0.0  0.0 1.0 1.0
-#pragma parameter LUT_Size2      "LUT Size 2"           64.0 0.0 64.0 16.0
-#pragma parameter LUT2_toggle    "LUT 2 Toggle"         0.0  0.0 1.0 1.0
 
 #define M_PI            3.1415926535897932384626433832795/180.0
 #define signal          params.g_signal_type
@@ -217,8 +209,6 @@ void main()
 layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
-layout(set = 0, binding = 3) uniform sampler2D SamplerLUT1;
-layout(set = 0, binding = 4) uniform sampler2D SamplerLUT2;
 
 
 
@@ -467,20 +457,6 @@ float SatMask(float color_r, float color_g, float color_b)
 }
 
 
-//  This shouldn't be necessary but it seems some undefined values can
-//  creep in and each GPU vendor handles that differently. This keeps
-//  all values within a safe range
-vec3 mixfix(vec3 a, vec3 b, float c)
-{
-    return (a.z < 1.0) ? mix(a, b, c) : a;
-}
-
-
-vec4 mixfix_v4(vec4 a, vec4 b, float c)
-{
-    return (a.z < 1.0) ? mix(a, b, c) : a;
-}
-
 
 //---------------------- Range Expansion/Compression -------------------
 
@@ -718,19 +694,8 @@ void main()
     col   = crtgamut < 2.0 ? TVtoPC(col, 1.0, UVmax.x, UVmax.y, 1.0) : col;
     col   = clamp(YUV_r601(col), 0., 1.);
 
-// Look LUT - (in SPC space)
-    float red   = (col.r * (global.LUT_Size1 - 1.0) + 0.4999) / (global.LUT_Size1 * global.LUT_Size1);
-    float green = (col.g * (global.LUT_Size1 - 1.0) + 0.4999) /  global.LUT_Size1;
-    float blue1 = (floor(col.b * (global.LUT_Size1 - 1.0))    /  global.LUT_Size1) + red;
-    float blue2 =  (ceil(col.b * (global.LUT_Size1 - 1.0))    /  global.LUT_Size1) + red;
-    float mixer = clamp(max((col.b - blue1) / (blue2 - blue1), 0.0), 0.0, 32.0);
-    vec3 color1 = texture(SamplerLUT1, vec2(blue1, green)).rgb;
-    vec3 color2 = texture(SamplerLUT1, vec2(blue2, green)).rgb;
-    vec3 vcolor = (global.LUT1_toggle == 0.0) ? col : mixfix(color1, color2, mixer);
-
-
 // CRT EOTF. To Display Referred Linear: Undo developer baked CRT gamma (from 2.40 at default 0.1 CRT black level, to 2.61 at 0.0 CRT black level)
-    col = EOTF_1886a_f3(vcolor, g_CRT_l, params.g_CRT_b, params.g_CRT_c);
+    col = EOTF_1886a_f3(col, g_CRT_l, params.g_CRT_b, params.g_CRT_c);
 
 
 //_   _   _   _   _   _   _   _   _   _   _   _   _   _   _   _   _   _   _   _
@@ -859,18 +824,5 @@ void main()
                               clamp(pow(    src_D, vec3(1./(2.20 + 0.20))),  0., 1.) ;
 
 
-// Technical LUT - (in SPC space)
-    float red_2   = (TRC.r * (global.LUT_Size2 - 1.0) + 0.4999) / (global.LUT_Size2 * global.LUT_Size2);
-    float green_2 = (TRC.g * (global.LUT_Size2 - 1.0) + 0.4999) /  global.LUT_Size2;
-    float blue1_2 = (floor(TRC.b * (global.LUT_Size2 - 1.0))    /  global.LUT_Size2) + red_2;
-    float blue2_2 =  (ceil(TRC.b * (global.LUT_Size2 - 1.0))    /  global.LUT_Size2) + red_2;
-    float mixer_2 = clamp(max((TRC.b - blue1_2) / (blue2_2 - blue1_2), 0.0), 0.0, 32.0);
-    vec3 color1_2 = texture(SamplerLUT2, vec2(blue1_2, green_2)).rgb;
-    vec3 color2_2 = texture(SamplerLUT2, vec2(blue2_2, green_2)).rgb;
-    vec3 LUT2_output = mixfix(color1_2, color2_2, mixer_2);
-
-    LUT2_output = (global.LUT2_toggle == 0.0) ? TRC : LUT2_output;
-
-
-    FragColor = vec4(LUT2_output, 1.0);
+    FragColor = vec4(TRC, 1.0);
 }
