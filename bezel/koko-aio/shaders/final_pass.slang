@@ -1006,7 +1006,11 @@ void main() {
         if (DO_CURVATURE == 1.0  &&  ((GEOM_WARP_X != 0.0) || (GEOM_WARP_Y != 0.0))) {
             co_content = Warp_fast(co_content, vWarp_vexp, vWarp_arg2, GEOM_CUT_EARS);
         }
-        
+      
+    //Mirror coords needs to be calculated here, before geom override, but after curvature.
+    //It is still not perfect but a reasonable tradeoff by now.
+        vec2 co_mirror = zoom(co_content, 1/BEZEL_REFL_ZOOMOUT_ROOM);
+      
     //Apply other content coords modifiers
         if (DO_GAME_GEOM_OVERRIDE == 1.0)
             co_content = content_geom_override(co_content, GAME_GEOM_ASPECT, vIn_aspect, GAME_GEOM_VSHIFT, GAME_GEOM_HSHIFT, GAME_GEOM_ZOOM);
@@ -1032,7 +1036,6 @@ void main() {
         vec4 pixel_bezel;
         //SKIP LOGIC is inside fn_pixel_bezel
         if (DO_BEZEL == 1.0) {
-            vec2 co_mirror = zoom(co_content, 1/BEZEL_REFL_ZOOMOUT_ROOM);
             pixel_bezel = fn_pixel_bezel(co_bezel, co_mirror, BG_IMAGE_NIGHTIFY);
             //If we used a smooth_border, canvas_busy is it, but since the content is in the bezel,
             //we can safely use it to smooth/darken the game border
