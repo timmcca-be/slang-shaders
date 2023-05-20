@@ -45,7 +45,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 
 #pragma parameter HORIZONTAL_BLUR "Horizontal Blur"            0.0 0.0 1.0 1.0
 #pragma parameter VERTICAL_BLUR "Vertical Blur"                0.0 0.0 1.0 1.0
-#pragma parameter BLUR_OFFSET "Blur Intensity"                 0.5 0.0 1.0 0.05
+#pragma parameter BLUR_OFFSET "Blur Intensity"                 0.5 -1.0 1.0 0.05
 #pragma parameter SUBPIXEL_SCALING "Subpixel scaling"          0.0 0.0 1.0 1.0
 #pragma parameter BGR_LCD_PATTERN "BGR output pattern"         0.0 0.0 1.0 1.0
 #pragma parameter COLOUR_BLEEDING "Colour bleeding intensity"  0.0 0.0 3.0 0.1
@@ -86,13 +86,13 @@ vec4 textureAABlur(in vec2 uv){
     vec2 fuv = uv - iuv;    
     if (params.HORIZONTAL_BLUR == 1.0){
         vec2 uv1 = vec2(uv + vec2(-0.5,-0.5)) / texSize.xy;
-        vec2 uv2 = vec2(uv + vec2(-0.5 + params.BLUR_OFFSET,-0.5)) / texSize.xy;
+        vec2 uv2 = vec2(uv + vec2(-0.5 - params.BLUR_OFFSET,-0.5)) / texSize.xy;
         vec4 col1 = texture( Source, uv1 );
         vec4 col2 = texture( Source, uv2 );
         vec4 col = (col1 + col2) / vec4(2.0);
         if (params.VERTICAL_BLUR == 1.0){
-            vec2 uv3 = vec2(uv + vec2(-0.5,-0.5 +params.BLUR_OFFSET)) / texSize.xy;
-            vec2 uv4 = vec2(uv + vec2(-0.5 + params.BLUR_OFFSET,-0.5 +params.BLUR_OFFSET)) / texSize.xy;
+            vec2 uv3 = vec2(uv + vec2(-0.5,-0.5 - params.BLUR_OFFSET)) / texSize.xy;
+            vec2 uv4 = vec2(uv + vec2(-0.5 - params.BLUR_OFFSET,-0.5 - params.BLUR_OFFSET)) / texSize.xy;
             vec4 col3 = texture( Source, uv3 );
             vec4 col4 = texture( Source, uv4 );
             col = (((col3 + col4) / vec4(2.0)) + col) / vec4(2.0);
@@ -119,7 +119,7 @@ float GetFuv(in vec2 uv){
 
 vec3 XCoords(in float coord, in float factor){
     float iGlobalTime = float(params.FrameCount) * 0.025;
-    float spread = 0.333 + params.COLOUR_BLEEDING;
+    float spread = 1.0 / 3.0 + params.COLOUR_BLEEDING;
     vec3 coords = vec3(coord);
     if(params.BGR_LCD_PATTERN == 1.0)
         coords.r += spread * 2.0;
