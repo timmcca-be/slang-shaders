@@ -3,7 +3,7 @@
 /*
    CRT - Guest - NTSC - Pass1
    
-   Copyright (C) 2018-2022 guest(r) - guest.r@gmail.com
+   Copyright (C) 2018-2023 guest(r) - guest.r@gmail.com
 
    Incorporates many good ideas and suggestions from Dr. Venom.
    I would also like give thanks to many Libretro forums members for continuous feedback, suggestions and caring about the shader.
@@ -37,6 +37,7 @@ layout(push_constant) uniform Push
 	float HSHARP; 
 	float spike;
 	float internal_res;
+	float MAXS;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -58,6 +59,9 @@ layout(std140, set = 0, binding = 0) uniform UBO
 
 #pragma parameter HSHARP "          Sharpness Definition" 1.2 0.0 2.0 0.10
 #define HSHARP params.HSHARP
+
+#pragma parameter MAXS "          Maximum Sharpness" 0.15 0.0 0.30 0.01
+#define MAXS params.MAXS 
 
 #pragma parameter HARNG "          Substractive Sharpness Ringing" 0.4 0.0 4.0 0.10
 #define HARNG params.HARNG 
@@ -116,7 +120,7 @@ void main()
 	vec3 cmax = 0.0.xxx;
 	vec3 cmin = 1.0.xxx;
 	float sharp = gaussian(hsharpness) * S_SHARP;
-	float maxsharp = 0.20;
+	float maxsharp = MAXS;
 	float FPR = hsharpness;
 	float fpx = 0.0;
 	float sp = 0.0;

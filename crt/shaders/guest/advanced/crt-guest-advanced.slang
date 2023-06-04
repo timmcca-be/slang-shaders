@@ -3,7 +3,7 @@
 /*
    CRT - Guest - Advanced
    
-   Copyright (C) 2018-2022 guest(r) - guest.r@gmail.com
+   Copyright (C) 2018-2023 guest(r) - guest.r@gmail.com
 
    Incorporates many good ideas and suggestions from Dr. Venom.
    I would also like give thanks to many Libretro forums members for continuous feedback, suggestions and caring about the shader.
@@ -27,7 +27,7 @@
 layout(push_constant) uniform Push
 {
 	float TATE, IOS, OS, BLOOM, brightboost, brightboost1, gsl, scanline1, scanline2, beam_min, beam_max, beam_size,
-	h_sharp, s_sharp, csize, bsize1, warpX, warpY, glow, vertmask, spike, ring, no_scanlines;
+	h_sharp, s_sharp, csize, bsize1, warpX, warpY, glow, spike, ring, no_scanlines;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -58,7 +58,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 
 #pragma parameter bogus_brightness "[ BRIGHTNESS SETTINGS ]:" 0.0 0.0 1.0 1.0
 
-#pragma parameter glow "          Glow Strength" 0.08 -2.0 2.0 0.01
+#pragma parameter glow "          (Magic) Glow Strength" 0.08 -2.0 2.0 0.01
 #define glow         params.glow     // Glow Strength
 
 #pragma parameter bloom "          Bloom Strength" 0.0 -2.0 2.0 0.05
@@ -87,7 +87,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter gsl "          Scanline Type" 0.0 -1.0 2.0 1.0
 #define gsl          params.gsl      // Alternate scanlines
 
-#pragma parameter scanline1 "          Scanline Beam Shape Center" 6.0 -20.0 20.0 0.5
+#pragma parameter scanline1 "          Scanline Beam Shape Center" 6.0 -20.0 40.0 0.5
 #define scanline1    params.scanline1      // scanline param, vertical sharpness
 
 #pragma parameter scanline2 "          Scanline Beam Shape Edges" 8.0 0.0 70.0 1.0 
@@ -96,19 +96,16 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter beam_min "          Scanline Shape Dark Pixels" 1.30 0.25 10.0 0.05
 #define beam_min     params.beam_min     // dark area beam min - narrow
 
-#pragma parameter beam_max "          Scanline Shape Bright Pixels" 1.00 0.4 3.5 0.025
+#pragma parameter beam_max "          Scanline Shape Bright Pixels" 1.00 0.2 3.5 0.025
 #define beam_max     params.beam_max     // bright area beam max - wide
 
 #pragma parameter beam_size "          Increased Bright Scanline Beam" 0.60 0.0 1.0 0.05
 #define beam_size    params.beam_size     // increased max. beam size
 
-#pragma parameter vertmask "          Scanline Color Deconvergence" 0.0 -1.0 1.0 0.1
-#define vertmask     params.vertmask     // Scanline deconvergence colors
-
 #pragma parameter scans "          Scanline Saturation / Mask Falloff" 0.5 -5.0 5.0 0.10
 #define scans        global.scans     // scanline saturation
 
-#pragma parameter scan_falloff "          Scanline Falloff" 1.0 0.20 2.0 0.05
+#pragma parameter scan_falloff "          Scanline Falloff" 1.0 0.15 2.0 0.05
 #define scan_falloff        global.scan_falloff     // scanline falloff
 
 #pragma parameter spike "          Scanline Spike Removal" 1.0 0.0 2.0 0.10
@@ -120,7 +117,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter scangamma "          Scanline Gamma" 2.40 0.5 5.0 0.05
 #define scangamma global.scangamma
 
-#pragma parameter no_scanlines "          No-scanline mode" 0.0 0.0 1.0 1.0
+#pragma parameter no_scanlines "          No-scanline mode" 0.0 0.0 1.5 0.05
 #define no_scanlines params.no_scanlines
 
 #pragma parameter bogus_filtering "[ FILTERING OPTIONS ]: " 0.0 0.0 1.0 1.0
@@ -268,7 +265,7 @@ void main()
 	
 	float gamma_in = 1.0/COMPAT_TEXTURE(LinearizePass, vec2(0.25,0.25)).a;
 	float intera = COMPAT_TEXTURE(LinearizePass, vec2(0.75,0.25)).a;
-	bool interb  = (intera < 0.5);
+	bool interb  = ((intera < 0.5) || (no_scanlines > 0.025));
 	bool notate  = (TATE < 0.5);
 
 	float SourceY = mix(SourceSize.y, SourceSize.x, TATE);
@@ -330,12 +327,13 @@ void main()
 	if (global.intres == 0.5 &&  notate && prescalex.y < 1.5) pC4.y = floor(pC4.y * global.OriginalSize.y)*global.OriginalSize.w + 0.5*global.OriginalSize.w;
 	if (global.intres == 0.5 && !notate && prescalex.x < 1.5) pC4.x = floor(pC4.x * global.OriginalSize.x)*global.OriginalSize.z + 0.5*global.OriginalSize.z;
 	
-	if (interb)  pC4.y = pos.y;
+	if (interb && no_scanlines < 0.025)  pC4.y = pos.y; else if (interb) pC4.y = pC4.y + smoothstep(0.40-0.5*no_scanlines, 0.60 + 0.5*no_scanlines, f)*mix(SourceSize.w, SourceSize.z, TATE);
 	
 	float zero = exp2(-h_sharp);
 	float sharp1 = s_sharp * zero;
 	
-	float fdivider = max(min(mix(prescalex.x, prescalex.y,TATE), 2.0), 1.5*float(interb));
+	float idiv = clamp(mix(SourceSize.x, SourceSize.y, TATE) / 400.0, 1.0, 2.0);
+	float fdivider = max(min(mix(prescalex.x, prescalex.y,TATE), 2.0), idiv*float(interb));
 	
 	float wl3 = (2.0 + fpx)/fdivider;
 	float wl2 = (1.0 + fpx)/fdivider;
@@ -373,7 +371,7 @@ void main()
 		c2 = max(c2 - sth, 0.0);
 	}
 	
-	vec3 l3, l2, l1, r1, r2, r3, sl2, sl1, sr1, sr2, color1, color2, colmin, colmax;
+	vec3 l3, l2, l1, r1, r2, r3, color1, color2, colmin, colmax;
 
 	l3 = COMPAT_TEXTURE(LinearizePass, pC4 -off2).rgb;
 	l2 = COMPAT_TEXTURE(LinearizePass, pC4 -offx).rgb;
@@ -518,33 +516,7 @@ if (!interb)
 	w1 = pow(w1, mix(2.0*abs(scans).xxx + 1.0, 1.0.xxx, mix(1.0.xxx, cref1, scanpow1)));
 	w2 = pow(w2, mix(2.0*abs(scans).xxx + 1.0, 1.0.xxx, mix(1.0.xxx, cref2, scanpow2)));
 	
-	// Scanline Deconvergence
-	
-	vec3 cd1 = one; vec3 cd2 = one; 
-
-if (abs(vertmask) > 0.025)
-{
-	float vm = sqrt(abs(vertmask));
-	float v_high1 = 1.0 + 0.3*vm;
-	float v_high2 = 1.0 + 0.6*vm;	
-	float v_low  = 1.0 - vm;
-	
-	float ds1 = min(max(1.0-w3*w3, 2.5*f1), 1.0);
-	float ds2 = min(max(1.0-w3*w3, 2.5*f2), 1.0);
-	
-	if (vertmask < 0.0) 
-	{
-		cd1 = mix(one, vec3(v_high2, v_low, v_low), ds1);
-		cd2 = mix(one, vec3(v_low, v_high1, v_high1), ds2);
-	}
-	else
-	{
-		cd1 = mix(one, vec3(v_high1, v_low, v_high1), ds1);
-		cd2 = mix(one, vec3(v_low, v_high2, v_low), ds2);
-	}
-}
-	
-	color = (gc(color1)*w1*cd1 + gc(color2)*w2*cd2)/mix(1.0.xxx, w1+w2, no_scanlines);
+	color = (gc(color1)*w1 + gc(color2)*w2);
 
 	if (abs(rolling_scan) > 0.005) 
 	{ 
