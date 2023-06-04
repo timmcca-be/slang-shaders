@@ -3,7 +3,7 @@
 /*
    CRT - Guest - Advanced - HD - Pass2
    
-   Copyright (C) 2018-2021 guest(r) - guest.r@gmail.com
+   Copyright (C) 2018-2023 guest(r) - guest.r@gmail.com
 
    Incorporates many good ideas and suggestions from Dr. Venom.
    I would also like give thanks to many Libretro forums members for continuous feedback, suggestions and caring about the shader.
@@ -27,7 +27,7 @@
 layout(push_constant) uniform Push
 {
 	float IOS, brightboost, brightboost1, gsl, scanline1, scanline2, beam_min, beam_max, beam_size,
-    glow, vertmask, inters, bloom, halation, scans, gamma_c, no_scanlines;
+    glow, inters, bloom, halation, scans, gamma_c, no_scanlines, MAXS;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -57,10 +57,13 @@ layout(std140, set = 0, binding = 0) uniform UBO
 	float scan_falloff;
 	float overscanX;
 	float overscanY;
-	float bloom_dist;	
+	float bloom_dist;
 } global;
 
 #pragma parameter bogus_vfiltering "[ VERTICAL/INTERLACING FILTERING OPTIONS ]: " 0.0 0.0 1.0 1.0
+
+#pragma parameter MAXS "          Maximum Sharpness" 0.15 0.0 0.30 0.01
+#define MAXS params.MAXS
 
 #pragma parameter VSHARPNESS "          Vertical Filter Range" 1.0 1.0 8.0 0.05
 #define VSHARPNESS global.VSHARPNESS
@@ -71,7 +74,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter S_SHARPV "          Vert. Substractive Sharpness" 1.0 0.0 2.0 0.10
 #define S_SHARPV global.S_SHARPV
 
-#pragma parameter VSHARP "          Vert. Sharpness Definition" 1.25 0.0 2.0 0.10
+#pragma parameter VSHARP "          Vert. Sharpness Definition" 1.20 0.0 2.0 0.10
 #define VSHARP global.VSHARP
 
 #pragma parameter VARNG "          Substractive Sharpness Ringing" 0.2 0.0 4.0 0.10
@@ -116,7 +119,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 
 #pragma parameter bogus_brightness "[ BRIGHTNESS SETTINGS ]:" 0.0 0.0 1.0 1.0
 
-#pragma parameter glow "          Glow Strength" 0.08 -2.0 2.0 0.01
+#pragma parameter glow "          (Magic) Glow Strength" 0.08 -2.0 2.0 0.01
 #define glow         params.glow     // Glow Strength
 
 #pragma parameter bloom "          Bloom Strength" 0.0 -2.0 2.0 0.05
@@ -145,7 +148,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter gsl "          Scanline Type" 0.0 -1.0 2.0 1.0
 #define gsl          params.gsl      // Alternate scanlines
 
-#pragma parameter scanline1 "          Scanline Beam Shape Center" 6.0 -20.0 20.0 0.5
+#pragma parameter scanline1 "          Scanline Beam Shape Center" 6.0 -20.0 40.0 0.5
 #define scanline1    params.scanline1      // scanline param, vertical sharpness
 
 #pragma parameter scanline2 "          Scanline Beam Shape Edges" 8.0 0.0 70.0 1.0 
@@ -154,25 +157,22 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter beam_min "          Scanline Shape Dark Pixels" 1.20 0.25 10.0 0.05
 #define beam_min     params.beam_min     // dark area beam min - narrow
 
-#pragma parameter beam_max "          Scanline Shape Bright Pixels" 1.00 0.4 3.5 0.025
+#pragma parameter beam_max "          Scanline Shape Bright Pixels" 1.00 0.2 3.5 0.025
 #define beam_max     params.beam_max     // bright area beam max - wide
 
 #pragma parameter beam_size "          Increased Bright Scanline Beam" 0.60 0.0 1.0 0.05
 #define beam_size    params.beam_size     // increased max. beam size
 
-#pragma parameter vertmask "          Scanline Color Deconvergence" 0.0 -1.0 1.0 0.1
-#define vertmask     params.vertmask     // Scanline deconvergence colors
-
 #pragma parameter scans "          Scanline Saturation / Mask Falloff" 0.50 -5.0 5.0 0.10
 #define scans        params.scans     // scanline saturation
 
-#pragma parameter scan_falloff "          Scanline Falloff" 1.0 0.20 2.0 0.05
+#pragma parameter scan_falloff "          Scanline Falloff" 1.0 0.10 2.0 0.05
 #define scan_falloff        global.scan_falloff     // scanline falloff
 
 #pragma parameter scangamma "          Scanline Gamma" 2.40 0.5 5.0 0.05
 #define scangamma global.scangamma
 
-#pragma parameter no_scanlines "          No-scanline mode" 0.0 0.0 1.0 1.0
+#pragma parameter no_scanlines "          No-scanline mode" 0.0 0.0 1.5 0.05
 #define no_scanlines params.no_scanlines
 
 #pragma parameter internal_res "          Internal Resolution" 1.0 1.0 8.0 0.10
@@ -280,7 +280,7 @@ vec3 v_resample (vec2 tex0, vec4 Size) {
 	vec3 cmin = 1.0.xxx;
 	float vsharpness = VSHARPNESS*internal_res;
 	float sharp = gaussian(vsharpness) * S_SHARPV;
-	float maxsharp = 0.20;
+	float maxsharp = MAXS;
 	float FPR = vsharpness;
 	float fpx = 0.0;
 
@@ -320,7 +320,7 @@ void main()
 	vec4 SourceSize = vec4(global.SourceSize.x, global.OriginalSize.y, global.SourceSize.z, global.OriginalSize.w);
 	float gamma_in = 1.0/COMPAT_TEXTURE(LinearizePass, vec2(0.25,0.25)).a;
 	float intera = COMPAT_TEXTURE(LinearizePass, vec2(0.75,0.25)).a;
-	bool interb  = (intera < 0.5);
+	bool interb  = ((intera < 0.5) || (no_scanlines > 0.025));
 
 	float SourceY = SourceSize.y;
 	float sy = 1.0;
@@ -362,6 +362,7 @@ void main()
 	pC4.x = pos.x;
 
 	if (global.intres == 0.5 && prescalex.y < 1.5) pC4.y = floor(pC4.y * global.OriginalSize.y)*global.OriginalSize.w + 0.5*global.OriginalSize.w;
+	if (interb && no_scanlines > 0.025) pC4.y = pC4.y + smoothstep(0.40-0.5*no_scanlines, 0.60 + 0.5*no_scanlines, f)*SourceSize.w;
 	
 	vec3 color1 = COMPAT_TEXTURE(Pass1, pC4      ).rgb;
 	vec3 scolor1 = 	COMPAT_TEXTURE(Pass1, pC4      ).aaa;
@@ -370,7 +371,7 @@ void main()
 
 	float prescaley = float(textureSize(LinearizePass, 0).y) / global.OriginalSize.y;	
 	
-	if (interb) color1 = v_resample(pos, SourceSize * vec4(1.0, prescaley, 1.0, 1.0/prescaley));
+	if (interb && no_scanlines < 0.05) color1 = v_resample(pos, SourceSize * vec4(1.0, prescaley, 1.0, 1.0/prescaley));
 	
 	pC4+=dy;
 
@@ -430,33 +431,8 @@ if (!interb)
 	w1 = pow(w1, mix(2.0*abs(scans).xxx + 1.0, 1.0.xxx, mix(1.0.xxx, cref1, scanpow1)));
 	w2 = pow(w2, mix(2.0*abs(scans).xxx + 1.0, 1.0.xxx, mix(1.0.xxx, cref2, scanpow2)));
 	
-	// Scanline Deconvergence
 	
-	vec3 cd1 = one; vec3 cd2 = one;
-	
-if (abs(vertmask) > 0.025)
-{
-	float vm = sqrt(abs(vertmask));
-	float v_high1 = 1.0 + 0.3*vm;
-	float v_high2 = 1.0 + 0.6*vm;	
-	float v_low  = 1.0 - vm;
-	
-	float ds1 = min(max(1.0-w3*w3, 2.5*f1), 1.0);
-	float ds2 = min(max(1.0-w3*w3, 2.5*f2), 1.0);
-	
-	if (vertmask < 0.0) 
-	{
-		cd1 = mix(one, vec3(v_high2, v_low, v_low), ds1);
-		cd2 = mix(one, vec3(v_low, v_high1, v_high1), ds2);
-	}
-	else
-	{
-		cd1 = mix(one, vec3(v_high1, v_low, v_high1), ds1);
-		cd2 = mix(one, vec3(v_low, v_high2, v_low), ds2);
-	}
-}
-	
-	color = (gc(color1)*w1*cd1 + gc(color2)*w2*cd2)/mix(1.0.xxx, w1+w2, no_scanlines);
+	color = (gc(color1)*w1 + gc(color2)*w2);
 	color = min(color, 1.0);
 }
 	

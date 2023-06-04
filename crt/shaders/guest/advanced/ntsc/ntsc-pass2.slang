@@ -14,11 +14,13 @@ layout(std140, set = 0, binding = 0) uniform UBO
    float ntsc_phase;
    float auto_res;
    float ntsc_ring;
+   float ntsc_cscale;
 } global;
 
-#pragma parameter ntsc_scale "NTSC Resolution Scaling" 1.0 0.20 2.5 0.01
-#pragma parameter ntsc_phase "NTSC Phase: Auto | 2 phase | 3 phase" 1.0 1.0 3.0 1.0
-#pragma parameter ntsc_ring  "NTSC Anti-Ringing" 0.0 0.0 1.0 1.0
+#pragma parameter ntsc_cscale "NTSC Chroma Scaling / Bleeding" 1.0 0.20 2.25 0.05
+#pragma parameter ntsc_scale  "NTSC Resolution Scaling" 1.0 0.20 2.5 0.025
+#pragma parameter ntsc_phase  "NTSC Phase: Auto | 2 phase | 3 phase" 1.0 1.0 3.0 1.0
+#pragma parameter ntsc_ring   "NTSC Anti-Ringing" 0.0 0.0 1.0 1.0
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
@@ -38,7 +40,7 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 
 vec3 fetch_offset(float offset, float one_x)
 {
-   return texture(Source, vTexCoord + vec2((offset) * (one_x), 0.0)).xyz;
+   return vec3(texture(Source, vTexCoord + vec2((offset) * (one_x), 0.0)).x, texture(Source, vTexCoord + vec2((offset) * (one_x/global.ntsc_cscale), 0.0)).yz);
 }
 
 const mat3 yiq2rgb_mat = mat3(

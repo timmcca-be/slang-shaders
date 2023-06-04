@@ -11,13 +11,14 @@ layout(std140, set = 0, binding = 0) uniform UBO
    vec4 OriginalSize;
    vec4 SourceSize;
    uint FrameCount;
-   float quality, ntsc_sat, cust_fringing, cust_artifacting, ntsc_bright, ntsc_scale, ntsc_fields, ntsc_phase;
+   float quality, ntsc_sat, cust_fringing, cust_artifacting, ntsc_bright, ntsc_scale, ntsc_fields, ntsc_phase, ntsc_cscale;
 } global;
 
 #pragma parameter quality "NTSC Preset (Svideo=0 Composite=1 RF=2 Custom=-1)" 1.0 -1.0 2.0 1.0
 #pragma parameter ntsc_fields "NTSC Merge Fields" 0.0 0.0 1.0 1.0
 #pragma parameter ntsc_phase "NTSC Phase: Auto | 2 phase | 3 phase" 1.0 1.0 3.0 1.0
-#pragma parameter ntsc_scale "NTSC Resolution Scaling" 1.0 0.20 2.5 0.01
+#pragma parameter ntsc_scale "NTSC Resolution Scaling" 1.0 0.20 2.5 0.025
+#pragma parameter ntsc_cscale "NTSC Chroma Scaling / Bleeding" 1.0 0.20 2.25 0.05
 #pragma parameter ntsc_sat "NTSC Color Saturation" 1.0 0.0 2.0 0.01
 #pragma parameter ntsc_bright "NTSC Brightness" 1.0 0.0 1.5 0.01
 #pragma parameter cust_fringing "NTSC Custom Fringing Value" 0.0 0.0 5.0 0.1
@@ -138,7 +139,7 @@ if (MERGE > 0.5)
    yiq *= mix_mat; // Cross-talk.
    yiq.yz *= vec2(i_mod, q_mod); // Demodulate.
    
-   if (res > 1.025)
+    if (res > 1.025)
    {
       mod_phase = chroma_phase + pix_no.x * CHROMA_MOD_FREQ * res;
       i_mod = cos(mod_phase); 
