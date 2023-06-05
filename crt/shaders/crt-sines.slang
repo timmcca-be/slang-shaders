@@ -167,7 +167,7 @@ void main()
          color *=  SCANLINE * sin(fract(vTexCoord.y*SourceSize.y/SCALE)*3.141529) +(1.0-SCANLINE);
     color = pow(color,vec3(INGAMMA));
 
-         color =mix(color, color*mask, dot(color, vec3(FADE)));
+         color =mix(color*mask, color, dot(color, vec3(FADE)));
     
     color *= mix(1.0,BOOST,lum);
     color *= vec3(1.0+WPR,     1.0-WPR/2.0, 1.0-WPR/2.0);
