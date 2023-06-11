@@ -498,7 +498,7 @@ void main()
         float lum1 = color.r * 0.3 + color.g * 0.6 + color.b * 0.1;
 
         
-        color *= mix(mask((vTexCoord * params.OutputSize.xy) * 1.0001, color,lum1), vec3(1.0), lum1*global.preserve);
+        color *= mix(mask((vTexCoord * params.OutputSize.xy), color,lum1), vec3(1.0), lum1*global.preserve);
         
 
         if (global.slotmask != 0.0) color *= SlotMask((vTexCoord * params.OutputSize.xy) * 1.0001, color);

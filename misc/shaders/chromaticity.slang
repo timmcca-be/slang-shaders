@@ -25,41 +25,14 @@ layout(push_constant) uniform Push
 	vec4 OriginalSize;
 	vec4 OutputSize;
 	uint FrameCount;
-    float CHROMA_A_X,CHROMA_A_Y,CHROMA_B_X,CHROMA_B_Y,CHROMA_C_X,CHROMA_C_Y,CHROMA_A_WEIGHT,
-    CHROMA_B_WEIGHT,CHROMA_C_WEIGHT,CRT_TR0,CRT_TR,CRT_TR2,SCALE_W,GAMMAIN,GAMMAOUT;
+    float COLOR_MODE,GAMMAIN,GAMMAOUT;
 } params;
-
-#pragma parameter Readme "READ GLSL FILE FOR VARIOUS COEFFS" 0.0 0.0 1.0 1.0 
-#pragma parameter CHROMA_A_X "Chromaticity R x" 0.670 0.0 1.0 0.001
-#pragma parameter CHROMA_A_Y "Chromaticity R y" 0.330 0.0 1.0 0.001
-#pragma parameter CHROMA_B_X "Chromaticity G x" 0.210 0.0 1.0 0.001
-#pragma parameter CHROMA_B_Y "Chromaticity G y" 0.710 0.0 1.0 0.001
-#pragma parameter CHROMA_C_X "Chromaticity B x" 0.140 0.0 1.0 0.001
-#pragma parameter CHROMA_C_Y "Chromaticity B y" 0.080 0.0 1.0 0.001
-#pragma parameter CHROMA_A_WEIGHT "Chromaticity R luminance weight" 0.299 0.0 1.0 0.01
-#pragma parameter CHROMA_B_WEIGHT "Chromaticity G luminance weight" 0.587 0.0 1.0 0.01
-#pragma parameter CHROMA_C_WEIGHT "Chromaticity B luminance weight" 0.114 0.0 1.0 0.01
-#pragma parameter CRT_TR0 "Transfer Function" 0.018 0.0 0.2 0.001
-#pragma parameter CRT_TR "Transfer Function" 0.099 0.0 0.2 0.001
-#pragma parameter CRT_TR2 "Transfer Function" 4.5 3.0 5.0 0.05
-#pragma parameter SCALE_W "Scale white point" 1.0 0.0 1.0 1.0
-#pragma parameter GAMMAIN "Gamma In" 2.4 1.0 4.0 0.05
-#pragma parameter GAMMAOUT "Gamma Out" 2.2 1.0 4.0 0.05
+#pragma parameter COLOR_MODE "SRGB,SMPTE C,REC709,BT2020,SMPTE240,NTSC1953,EBU" 0.0 0.0 6.0 1.0   
+#pragma parameter GAMMAIN "Gamma In" 2.0 1.0 4.0 0.05
+#pragma parameter GAMMAOUT "Gamma Out" 2.0 1.0 4.0 0.05
 
 
-#define CHROMA_A_X params.CHROMA_A_X
-#define CHROMA_A_Y params.CHROMA_A_Y
-#define CHROMA_B_X params.CHROMA_B_X
-#define CHROMA_B_Y params.CHROMA_B_Y
-#define CHROMA_C_X params.CHROMA_C_X
-#define CHROMA_C_Y params.CHROMA_C_Y
-#define CHROMA_A_WEIGHT params.CHROMA_A_WEIGHT
-#define CHROMA_B_WEIGHT params.CHROMA_B_WEIGHT
-#define CHROMA_C_WEIGHT params.CHROMA_C_WEIGHT
-#define CRT_TR0 params.CRT_TR0
-#define CRT_TR params.CRT_TR
-#define CRT_TR2 params.CRT_TR2
-#define SCALE_W params.SCALE_W
+#define COLOR_MODE params.COLOR_MODE
 #define GAMMAIN params.GAMMAIN
 #define GAMMAOUT params.GAMMAOUT
 #define WHITE  vec3(1.0, 1.0, 1.0)
@@ -135,6 +108,54 @@ vec3 xyY_to_XYZ(const vec3 xyY)
 
 vec3 Yrgb_to_RGB(mat3 toRGB, vec3 W, vec3 Yrgb)
 {
+
+//0 SRGB     0.640 0.330 / 0.300 0.600 / 0.150  0.060 --
+//1 SMPTE C  0.630 0.340 / 0.310 0.595 / 0.155  0.070 --
+//2 REC709   0.640 0.330 / 0.300 0.600 / 0.150  0.060 --
+//3 BT2020   0.708 0.292 / 0.170 0.797 / 0.131   0.046 --
+//4 SMPTE240 0.630 0.340 / 0.310 0.595 / 0.155   0.070 --
+//5 NTSC1953 0.670 0.330 / 0.210 0.710 / 0.140   0.080 
+//6 EBU      0.640 0.330 / 0.290 0.600 / 0.150   0.060 --
+
+float CHROMA_A_X, CHROMA_A_Y,CHROMA_B_X, CHROMA_B_Y, CHROMA_C_X, CHROMA_C_Y;
+    if (COLOR_MODE == 0.0 || COLOR_MODE == 2.0 || COLOR_MODE == 6.0) 
+    {
+CHROMA_A_X=0.64;
+CHROMA_A_Y=0.33;
+CHROMA_B_X=0.3;
+CHROMA_B_Y=0.6;
+CHROMA_C_X= 0.15;
+CHROMA_C_Y= 0.06;
+    }
+
+else if (COLOR_MODE == 1.0 || COLOR_MODE == 4.0) 
+    {
+CHROMA_A_X=0.63;
+CHROMA_A_Y=0.34;
+CHROMA_B_X=0.31;
+CHROMA_B_Y=0.595;
+CHROMA_C_X= 0.155;
+CHROMA_C_Y= 0.070;
+    }
+
+else if (COLOR_MODE == 3.0 ) 
+    {
+CHROMA_A_X=0.708;
+CHROMA_A_Y=0.292;
+CHROMA_B_X=0.17;
+CHROMA_B_Y=0.797;
+CHROMA_C_X= 0.131;
+CHROMA_C_Y= 0.046;
+    }
+else if (COLOR_MODE == 6.0 ) 
+    {
+CHROMA_A_X=0.67;
+CHROMA_A_Y=0.33;
+CHROMA_B_X=0.21;
+CHROMA_B_Y=0.71;
+CHROMA_C_X= 0.14;
+CHROMA_C_Y= 0.08;
+    }
     mat3 xyYrgb = mat3(CHROMA_A_X, CHROMA_A_Y, Yrgb.r,
                        CHROMA_B_X, CHROMA_B_Y, Yrgb.g,
                        CHROMA_C_X, CHROMA_C_Y, Yrgb.b);
@@ -149,10 +170,90 @@ vec3 Yrgb_to_RGB(mat3 toRGB, vec3 W, vec3 Yrgb)
                 dot(W, vec3(RGBrgb[0].b, RGBrgb[1].b, RGBrgb[2].b)));
 }
 
+vec3 luminance()
+{
+//0 SRGB     0.299 0.587 0.114
+//1 SMPTE C  0.299 0.587 0.114 
+//2 REC709   0.212 0.715 0.072 
+//3 BT2020    0.262 0.678 0.059 
+//4 SMPTE240  0.212 0.701 0.086 
+//5 NTSC1953  0.299 0.587 0.114 
+//6 EBU       0.299 0.587 0.114 
+
+ float CHROMA_A_WEIGHT, CHROMA_B_WEIGHT, CHROMA_C_WEIGHT;
+ if (COLOR_MODE == 0.0 || COLOR_MODE == 1.0 || 
+      COLOR_MODE == 5.0 || COLOR_MODE == 6.0)
+{
+    CHROMA_A_WEIGHT = 0.299;
+    CHROMA_B_WEIGHT = 0.587;
+    CHROMA_C_WEIGHT = 0.114;
+}
+
+else if (COLOR_MODE == 2.0 || COLOR_MODE == 4.0)
+{
+    CHROMA_A_WEIGHT = 0.212;
+    CHROMA_B_WEIGHT = 0.715;
+    CHROMA_C_WEIGHT = 0.072;
+}
+
+else if (COLOR_MODE == 3.0 )
+{
+    CHROMA_A_WEIGHT = 0.262;
+    CHROMA_B_WEIGHT = 0.678;
+    CHROMA_C_WEIGHT = 0.059;
+}
+
+
+    return vec3(CHROMA_A_WEIGHT, CHROMA_B_WEIGHT, CHROMA_C_WEIGHT);
+}
+
 
 float sdr_linear(const float x)
 {
-    return x < CRT_TR0 ? x / CRT_TR2 : pow((x + CRT_TR) / (1.0+ CRT_TR), GAMMAIN);
+//            RX   RY      GX     GY     BX      BY      RL    GL    BL       TR1    TR2   TR3
+//0 SRGB     0.040 0.055 12.92
+//1 SMPTE C  0.018 0.099 4.5
+//2 REC709   0.018 0.099 4.5
+//3 BT2020   0.059 0.099 4.5
+//4 SMPTE240 0.091 0.111 4.0
+//5 NTSC1953 0.081 0.099 4.5
+//6 EBU      0.081 0.099 4.5
+
+float CRT_TR1 ,CRT_TR2, CRT_TR3;
+
+if (COLOR_MODE == 0.0)
+{
+    CRT_TR1 = 0.040;
+    CRT_TR2 = 0.055;
+    CRT_TR3 = 12.92;
+}
+
+else if (COLOR_MODE == 1.0 || COLOR_MODE == 2.0)
+{
+    CRT_TR1 = 0.040;
+    CRT_TR2 = 0.099;
+    CRT_TR3 = 4.5;
+}
+else if (COLOR_MODE == 3.0 )
+{
+    CRT_TR1 = 0.059;
+    CRT_TR2 = 0.099;
+    CRT_TR3 = 4.5;
+}
+else if (COLOR_MODE == 4.0 )
+{
+    CRT_TR1 = 0.061;
+    CRT_TR2 = 0.111;
+    CRT_TR3 = 4.0;
+}
+else if (COLOR_MODE == 5.0 || COLOR_MODE == 6.0)
+{
+    CRT_TR1 = 0.081;
+    CRT_TR2 = 0.099;
+    CRT_TR3 = 4.5;
+}
+
+    return x < CRT_TR2 ? x / CRT_TR3 : pow((x + CRT_TR1) / (1.0+ CRT_TR1), GAMMAIN);
 }
 
 vec3 sdr_linear(const vec3 x)
@@ -175,14 +276,9 @@ void main()
     mat3 toRGB = colorspace_rgb();
     vec3 Yrgb = texture(Source, vTexCoord).rgb;
     Yrgb = sdr_linear(Yrgb);
-    vec3 W = vec3(CHROMA_A_WEIGHT, CHROMA_B_WEIGHT, CHROMA_C_WEIGHT);
+    vec3 W = luminance();
     vec3 RGB = Yrgb_to_RGB(toRGB, W, Yrgb);
-    if (SCALE_W > 0.0) {
-        vec3 white = Yrgb_to_RGB(toRGB, W, WHITE);
-        float G = 1.0 / max(max(white.r, white.g), white.b);
-
-        RGB *= G;
-    }
+    
     RGB = clamp(RGB, 0.0, 1.0);
     RGB = srgb_gamma(RGB);
     FragColor = vec4(RGB, 1.0);
