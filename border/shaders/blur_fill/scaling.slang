@@ -1,5 +1,3 @@
-#include "parameters.slang"
-
 // See compose.slang for copyright and other information.
 
 // Pixels in input coord. space
@@ -48,17 +46,24 @@ vec2 scale_o2i() {
     }
 }
 
-// In unit space (output to input)
+// Input to output scaling, in unit coordinate systems.
+vec2 scale_i2o() { return 1.0 / scale_o2i(); }
+
+// Get adjusted center in input unit coordinate system.
+vec2 get_input_center() {
+    return param.CENTER_CROP > 0.5
+               ? 0.5 * param.InputSize.zw *
+                     vec2(param.OS_CROP_LEFT + param.InputSize.x -
+                              param.OS_CROP_RIGHT,
+                          param.OS_CROP_TOP + param.InputSize.y -
+                              param.OS_CROP_BOTTOM)
+               : vec2(0.49999);
+}
+
+// In unit space (output to input).
 // coord_in_input_space = o2i(coord_in_output_space)
 // This is used to sample from the input texture in the output pass.
-vec2 o2i(vec2 x) {
-    const vec2 center_in =
-        param.CENTER_CROP > 0.5
-            ? 0.5 * param.InputSize.zw *
-                  vec2(param.OS_CROP_LEFT + param.InputSize.x -
-                           param.OS_CROP_RIGHT,
-                       param.OS_CROP_TOP + param.InputSize.y -
-                           param.OS_CROP_BOTTOM)
-            : vec2(0.49999);
-    return (x - 0.49999) * scale_o2i() + center_in;
-}
+vec2 o2i(vec2 x) { return (x - 0.49999) * scale_o2i() + get_input_center(); }
+
+// In unit coordinate systems.
+vec2 i2o(vec2 x) { return (x - get_input_center()) * scale_i2o() + 0.49999; }
