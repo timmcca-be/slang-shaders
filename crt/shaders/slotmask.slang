@@ -90,7 +90,7 @@ if (msk_scale == 4.0)
      y = fract(p.y/4.0);
     if (x < 0.5){     
      if (x<1.0/6.0 &&                   y > 1.0/4.0) msk.b = 1.0;
-     else if (x<2.0/6.0 && x>1.0/6.0 && y < 3.0/4.0 ) msk.g = 1.0;
+     else if (x<2.0/6.0 && x>1.0/6.0 && y > 1.0/4.0 ) msk.g = 1.0;
      else if (x<3.0/6.0 && x>2.0/6.0 && y > 1.0/4.0 ) msk.r = 1.0;
     }
 
@@ -112,9 +112,9 @@ if (msk_scale == 5.0)
     }
 
  else if (x > 0.4999){     
-     if      (x<4.0/6.0              && y < 3.0/5.0 || x<4.0/6.0              && y >= 4.0/5.0) msk.b = 1.0;
-     else if (x<5.0/6.0 && x>4.0/6.0 && y < 3.0/5.0 || x<5.0/6.0 && x>4.0/6.0 && y >= 4.0/5.0 ) msk.g = 1.0;
-     else if (x<6.0/6.0 && x>5.0/6.0 && y < 3.0/5.0 || x<6.0/6.0 && x>5.0/6.0 && y >= 4.0/5.0 ) msk.r = 1.0;
+     if      (x<4.0/6.0              && y < 2.0/5.0 || x<4.0/6.0              && y >= 3.0/5.0) msk.b = 1.0;
+     else if (x<5.0/6.0 && x>4.0/6.0 && y < 2.0/5.0 || x<5.0/6.0 && x>4.0/6.0 && y >= 3.0/5.0 ) msk.g = 1.0;
+     else if (x<6.0/6.0 && x>5.0/6.0 && y < 2.0/5.0 || x<6.0/6.0 && x>5.0/6.0 && y >= 3.0/5.0 ) msk.r = 1.0;
     }
 }
 
@@ -124,13 +124,8 @@ if (msk_scale == 5.0)
 }
 
 void main()
-{
-    vec2 OGL2Pos = vTexCoord*SourceSize.xy;    
-    float cent = floor(OGL2Pos.y)+0.5;
-    float ycoord = cent*SourceSize.w; 
-    ycoord  = mix(vTexCoord.y, ycoord,0.7);
-    
-    vec3 col = texture(Source,vec2(vTexCoord.x,ycoord)).rgb;  
+{    
+    vec3 col = texture(Source,vTexCoord).rgb;  
     float l = dot(col,vec3(0.22,0.70,0.08));
 
     col = col*col;
