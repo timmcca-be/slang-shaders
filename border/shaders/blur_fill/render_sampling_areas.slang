@@ -43,12 +43,12 @@ layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Input;
 
-float min(vec4 i) { return min(min(i.x, i.y), min(i.z, i.w)); }
+float min_of_vec4(vec4 i) { return min(min(i.x, i.y), min(i.z, i.w)); }
 
 int argmin(vec4 i) {
-    const vec4 m = vec4(min(i));
+    const vec4 m = vec4(min_of_vec4(i));
     const vec4 ma = step(i, m) * vec4(0.0, -1.0, -2.0, -3.0);
-    return -int(min(ma));
+    return -int(min_of_vec4(ma));
 }
 
 // Returns a coordinate in [0, w) when repeating that interval (and optionally
