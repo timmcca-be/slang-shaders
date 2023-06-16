@@ -12,18 +12,20 @@
  *
  *
  */
+
 layout(push_constant) uniform Push
 {
 	vec4 SourceSize;
 	vec4 OriginalSize;
 	vec4 OutputSize;
 	uint FrameCount;
-    float DISTORTION,SCANLINE,INPUTGAMMA,OUTPUTGAMMA,MASK,SIZE;
+    float DISTORTION,SCANLINE,INPUTGAMMA,OUTPUTGAMMA,MASK,SIZE,DOWNSCALE;
 } params;
 
 // Parameter lines go here:
 #pragma parameter DISTORTION "Distortion" 0.12 0.0 0.30 0.01
 #pragma parameter SCANLINE "Scanline Weight" 0.3 0.2 0.6 0.05
+#pragma parameter DOWNSCALE "Scanlines Downscale" 1.0 1.0 2.0 1.0
 #pragma parameter INPUTGAMMA "Input Gamma" 2.4 0.0 4.0 0.05
 #pragma parameter OUTPUTGAMMA "Output Gamma" 2.2 0.0 4.0 0.05
 #pragma parameter MASK "Mask Brightness" 0.7 0.0 1.0 0.05
@@ -35,6 +37,7 @@ layout(push_constant) uniform Push
 #define OUTPUTGAMMA params.OUTPUTGAMMA
 #define MASK params.MASK
 #define SIZE params.SIZE
+#define DOWNSCALE params.DOWNSCALE
 
 #define SourceSize params.SourceSize
 #define OriginalSize params.OriginalSize
@@ -133,7 +136,7 @@ void main()
                 // Of all the pixels that are mapped onto the texel we are
                 // currently rendering, which pixel are we currently rendering?
                 vec2 ratio_scale = xy * SourceSize.xy - 0.5;
-                vec2 uv_ratio = fract(ratio_scale);
+                vec2 uv_ratio = fract(ratio_scale/DOWNSCALE);
 
                 // Snap to the center of the underlying texel.
                 xy = (floor(ratio_scale) + 0.5) / SourceSize.xy;
