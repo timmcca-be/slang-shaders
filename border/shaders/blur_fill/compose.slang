@@ -27,6 +27,7 @@
     strength of the blur.
 
     Changelog:
+    v1.2: Fix scaling bugs.
     v1.1: Fix bug with glcore driver.
     v1.0: Initial release.
 */
@@ -77,7 +78,7 @@ layout(set = 0, binding = 3) uniform sampler2D Tiled;
 layout(set = 0, binding = 4) uniform sampler2D Blurred;
 
 void main() {
-    const vec2 pixel_coord = o2i(vTexCoord) * param.InputSize.xy;
+    const vec2 pixel_coord = o2i(vTexCoord);
 
     const vec4 input_extrema = vec4(param.OS_CROP_LEFT, param.OS_CROP_TOP,
                                     param.InputSize.x - param.OS_CROP_RIGHT,
