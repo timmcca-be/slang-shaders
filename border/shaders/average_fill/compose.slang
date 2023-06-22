@@ -1,7 +1,7 @@
 #version 450
 
 /*
-    Average fill v1.0 by fishku
+    Average fill v1.2 by fishku
     Copyright (C) 2023
     Public domain license (CC0)
 

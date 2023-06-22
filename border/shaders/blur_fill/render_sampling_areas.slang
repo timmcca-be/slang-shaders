@@ -41,7 +41,7 @@ void main() {
 #pragma stage fragment
 layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
-layout(set = 0, binding = 2) uniform sampler2D Input;
+layout(set = 0, binding = 2) uniform sampler2D Source;
 
 float min_of_vec4(vec4 i) { return min(min(i.x, i.y), min(i.z, i.w)); }
 
@@ -218,7 +218,7 @@ vec3 sample_mirrored_frame(sampler2D tex, vec2 coord, vec4 input_extrema) {
 void main() {
     const vec2 pixel_coord = o2i(vTexCoord);
     FragColor = vec4(
-        sample_mirrored_frame(Input, pixel_coord,
+        sample_mirrored_frame(Source, pixel_coord,
                               vec4(param.OS_CROP_LEFT, param.OS_CROP_TOP,
                                    param.InputSize.x - param.OS_CROP_RIGHT,
                                    param.InputSize.y - param.OS_CROP_BOTTOM)),
