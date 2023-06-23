@@ -1,7 +1,7 @@
 #version 450
 
 /*
-    Blur fill v1.0 by fishku
+    Blur fill v1.3 by fishku
     Copyright (C) 2023
     Public domain license (CC0)
 
@@ -27,6 +27,7 @@
     strength of the blur.
 
     Changelog:
+    v1.3: Reduce shimmering artifacts.
     v1.2: Fix scaling bugs.
     v1.1: Fix bug with glcore driver.
     v1.0: Initial release.
