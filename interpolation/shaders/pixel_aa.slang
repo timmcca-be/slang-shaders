@@ -1,7 +1,7 @@
 #version 450
 
 /*
-    Pixel AA v1.0 by fishku
+    Pixel AA v1.1 by fishku
     Copyright (C) 2023
     Public domain license (CC0)
 
@@ -24,11 +24,12 @@
     subpixel anti-aliasing, results are identical to the "pixellate" shader.
 
     Changelog:
+    v1.1: Better subpixel sampling.
     v1.0: Initial release.
 */
 
 // clang-format off
-#pragma parameter PIX_AA_SETTINGS "=== Pixel AA v1.0 settings ===" 0.0 0.0 1.0 1.0
+#pragma parameter PIX_AA_SETTINGS "=== Pixel AA v1.1 settings ===" 0.0 0.0 1.0 1.0
 #pragma parameter PIX_AA_SHARP "Pixel AA sharpening amount" 1.0 1.0 4.0 0.05
 #pragma parameter PIX_AA_GAMMA "Enable gamma-correct blending" 1.0 0.0 1.0 1.0
 #pragma parameter PIX_AA_SUBPX "Enable subpixel AA" 0.0 0.0 1.0 1.0
@@ -82,12 +83,15 @@ vec3 to_lin(vec3 x) { return pow(x, vec3(2.2)); }
 
 vec3 to_srgb(vec3 x) { return pow(x, vec3(1.0 / 2.2)); }
 
+vec2 get_texel_size(vec2 pix_coord) {
+    return clamp(fwidth(pix_coord), 1.0e-5, 1.0);
+}
+
 // Params:
 // pix_coord: Coordinate in source pixel coordinates
 // px_size_uv: 1 / source resolution
 vec3 sample_aa(sampler2D tex, vec2 pix_coord, vec2 px_size_uv,
-               bool gamma_correct, float sharpness) {
-    const vec2 tx_size = clamp(fwidth(pix_coord), 1.0e-5, 1.0);
+               bool gamma_correct, float sharpness, vec2 tx_size) {
     const vec2 tx_coord = pix_coord - 0.5 * tx_size;
     const vec2 tx_coord_i = floor(tx_coord);
     const vec2 tx_offset =
@@ -110,6 +114,13 @@ vec3 sample_aa(sampler2D tex, vec2 pix_coord, vec2 px_size_uv,
     }
 }
 
+vec3 sample_aa(sampler2D tex, vec2 pix_coord, vec2 px_size_uv,
+               bool gamma_correct, float sharpness) {
+    const vec2 tx_size = get_texel_size(pix_coord);
+    return sample_aa(tex, pix_coord, px_size_uv, gamma_correct, sharpness,
+                     tx_size);
+}
+
 void main() {
     if (param.PIX_AA_SUBPX < 0.5) {
         FragColor =
@@ -124,9 +135,12 @@ void main() {
                 pix_coord +
                 vec2((param.PIX_AA_SUBPX_BGR < 0.5 ? i : -i) / 3.0, 0.0) *
                     param.OutputSize.zw * param.SourceSize.xy;
-            FragColor[i + 1] =
-                sample_aa(Source, subpix_coord, param.SourceSize.zw,
-                          param.PIX_AA_GAMMA > 0.5, param.PIX_AA_SHARP)[i + 1];
+            // With subpixel sampling, the sampling area is effectively reduced
+            // to a third.
+            const vec2 tx_size = get_texel_size(subpix_coord) / vec2(3.0, 1.0);
+            FragColor[i + 1] = sample_aa(
+                Source, subpix_coord, param.SourceSize.zw,
+                param.PIX_AA_GAMMA > 0.5, param.PIX_AA_SHARP, tx_size)[i + 1];
         }
         FragColor[3] = 1.0;
     }
