@@ -1,7 +1,7 @@
 #version 450
 
 /*
-    Blur fill v1.4 by fishku
+    Blur fill v1.5 by fishku
     Copyright (C) 2023
     Public domain license (CC0)
 
@@ -27,6 +27,7 @@
     strength of the blur.
 
     Changelog:
+    v1.5: Add anti-aliased interpolation for non-integer scaling.
     v1.4: Fix scaling bugs.
     v1.3: Reduce shimmering artifacts.
     v1.2: Fix scaling bugs.
@@ -54,6 +55,10 @@ layout(push_constant) uniform Push {
     float FILL_GAMMA;
     // From dual filter blur
     float BLUR_RADIUS;
+    // From pixel AA
+    float PIX_AA_SHARP;
+    float PIX_AA_SUBPX;
+    float PIX_AA_SUBPX_BGR;
 }
 param;
 
@@ -79,8 +84,12 @@ layout(set = 0, binding = 2) uniform sampler2D Input;
 layout(set = 0, binding = 3) uniform sampler2D Tiled;
 layout(set = 0, binding = 4) uniform sampler2D Blurred;
 
+#include "../../../interpolation/shaders/pixel_aa/shared.slang"
+
 void main() {
-    const vec2 pixel_coord = o2i(vTexCoord);
+    const vec2 scale_o2i = scale_o2i();
+    const vec2 pixel_coord =
+        (vTexCoord - 0.49999) * scale_o2i + get_input_center();
 
     const vec4 input_extrema = vec4(param.OS_CROP_LEFT, param.OS_CROP_TOP,
                                     param.InputSize.x - param.OS_CROP_RIGHT,
@@ -105,9 +114,39 @@ void main() {
         }
     } else {
         // Sample original.
-        // Do a sharp (nearest neighbor) resampling.
-        FragColor = vec4(
-            texture(Input, (floor(pixel_coord) + 0.5) * param.InputSize.zw).rgb,
-            1.0);
+        if (param.FORCE_INTEGER_SCALING > 0.5) {
+            // Do a perfectly sharp (nearest neighbor) sampling.
+            FragColor = vec4(
+                texture(Input, (floor(pixel_coord) + 0.5) * param.InputSize.zw)
+                    .rgb,
+                1.0);
+        } else {
+            // Do a sharp anti-aliased interpolation.
+            // Do not correct for gamma additionally because the input is
+            // already in linear color space.
+            if (param.PIX_AA_SUBPX < 0.5) {
+                const vec2 tx_size = get_texel_size(pixel_coord) * scale_o2i *
+                                     param.InputSize.zw;
+                FragColor =
+                    vec4(sample_aa(Input, pixel_coord, param.InputSize.zw,
+                                   false, param.PIX_AA_SHARP, tx_size),
+                         1.0);
+            } else {
+                for (int i = -1; i < 2; ++i) {
+                    const vec2 subpix_coord =
+                        pixel_coord +
+                        vec2((param.PIX_AA_SUBPX_BGR < 0.5 ? i : -i) / 3.0,
+                             0.0) *
+                            param.FinalViewportSize.zw * param.InputSize.xy;
+                    const vec2 tx_size = get_texel_size(subpix_coord) *
+                                         scale_o2i * param.InputSize.zw /
+                                         vec2(3.0, 1.0);
+                    FragColor[i + 1] =
+                        sample_aa(Input, subpix_coord, param.InputSize.zw,
+                                  false, param.PIX_AA_SHARP, tx_size)[i + 1];
+                }
+                FragColor[3] = 1.0;
+            }
+        }
     }
 }
