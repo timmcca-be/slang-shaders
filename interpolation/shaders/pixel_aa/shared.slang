@@ -1,9 +1,8 @@
-// This file has to be included at the frag shader stage so that fwidth() is
-// defined.
+// See pixel_aa.slang for copyright and other information.
 
 // clang-format off
-#pragma parameter PIX_AA_SETTINGS "=== Pixel AA v1.1 settings ===" 0.0 0.0 1.0 1.0
-#pragma parameter PIX_AA_SHARP "Pixel AA sharpening amount" 1.0 1.0 4.0 0.05
+#pragma parameter PIX_AA_SETTINGS "=== Pixel AA v1.2 settings ===" 0.0 0.0 1.0 1.0
+#pragma parameter PIX_AA_SHARP "Pixel AA sharpening amount" 1.5 0.0 2.0 0.05
 #pragma parameter PIX_AA_GAMMA "Enable gamma-correct blending" 1.0 0.0 1.0 1.0
 #pragma parameter PIX_AA_SUBPX "Enable subpixel AA" 0.0 0.0 1.0 1.0
 #pragma parameter PIX_AA_SUBPX_BGR "Use BGR subpx. instead of RGB" 0.0 0.0 1.0 1.0
@@ -25,40 +24,65 @@ vec3 to_lin(vec3 x) { return pow(x, vec3(2.2)); }
 
 vec3 to_srgb(vec3 x) { return pow(x, vec3(1.0 / 2.2)); }
 
-vec2 get_texel_size(vec2 pix_coord) {
-    return clamp(fwidth(pix_coord), 1.0e-5, 1.0);
-}
-
+// Function to get a single sample using the "pixel AA" method.
 // Params:
-// pix_coord: Coordinate in source pixel coordinates
-// px_size_uv: 1 / source resolution
-vec3 sample_aa(sampler2D tex, vec2 pix_coord, vec2 px_size_uv,
-               bool gamma_correct, float sharpness, vec2 tx_size) {
-    const vec2 tx_coord = pix_coord - 0.5 * tx_size;
-    const vec2 tx_coord_i = floor(tx_coord);
-    const vec2 tx_offset =
-        slopestep(1.0 - tx_size, vec2(1.0), fract(tx_coord), sharpness);
-    // With gamma correct blending, we have to do 4 taps and blend manually.
-    // Without it, we can make use of a single tap using bilinear interpolation.
+// tx_coord: Coordinate in source pixel (texel) coordinates
+vec3 sample_aa(sampler2D tex, vec2 tx_per_px, vec2 tx_to_uv, vec2 tx_coord,
+               float sharpness, bool gamma_correct) {
+    // The offset for interpolation is a periodic function with
+    // a period length of 1 texel.
+    // The input coordinate is shifted so that the center of the texel
+    // aligns with the start of the period.
+    // First, get the period and phase.
+    vec2 period;
+    const vec2 phase = modf(tx_coord - 0.5, period);
+    // The function starts at 0, then starts transitioning at
+    // 0.5 - 0.5 / pixels_per_texel, then reaches 0.5 at 0.5,
+    // Then reaches 1 at 0.5 + 0.5 / pixels_per_texel.
+    // For sharpness values < 1.0, blend to bilinear filtering.
+    const vec2 offset =
+        slopestep(min(1.0, sharpness) * (0.5 - 0.5 * tx_per_px),
+                  1.0 - min(1.0, sharpness) * (1.0 - (0.5 + 0.5 * tx_per_px)),
+                  phase, max(1.0, sharpness));
+
+    // With gamma correct blending, we have to do 4 taps and interpolate
+    // manually. Without it, we can make use of a single tap using bilinear
+    // interpolation. The offsets are shifted back to the texel center before
+    // sampling.
     if (gamma_correct) {
         const vec3 samples[] = {
-            to_lin(texture(tex, (tx_coord_i + 0.5) * px_size_uv).rgb),
-            to_lin(
-                texture(tex, (tx_coord_i + vec2(1.5, 0.5)) * px_size_uv).rgb),
-            to_lin(
-                texture(tex, (tx_coord_i + vec2(0.5, 1.5)) * px_size_uv).rgb),
-            to_lin(texture(tex, (tx_coord_i + 1.5) * px_size_uv).rgb)};
-        return to_srgb(mix(mix(samples[0], samples[1], tx_offset.x),
-                           mix(samples[2], samples[3], tx_offset.x),
-                           tx_offset.y));
+            to_lin(texture(tex, (period + 0.5) * tx_to_uv).rgb),
+            to_lin(texture(tex, (period + vec2(1.5, 0.5)) * tx_to_uv).rgb),
+            to_lin(texture(tex, (period + vec2(0.5, 1.5)) * tx_to_uv).rgb),
+            to_lin(texture(tex, (period + 1.5) * tx_to_uv).rgb)};
+        return to_srgb(mix(mix(samples[0], samples[1], offset.x),
+                           mix(samples[2], samples[3], offset.x), offset.y));
     } else {
-        return texture(tex, (tx_coord_i + 0.5 + tx_offset) * px_size_uv).rgb;
+        return texture(tex, (period + 0.5 + offset) * tx_to_uv).rgb;
     }
 }
 
-vec3 sample_aa(sampler2D tex, vec2 pix_coord, vec2 px_size_uv,
-               bool gamma_correct, float sharpness) {
-    const vec2 tx_size = get_texel_size(pix_coord);
-    return sample_aa(tex, pix_coord, px_size_uv, gamma_correct, sharpness,
-                     tx_size);
+// Function to get a pixel value, taking into consideration possible subpixel
+// interpolation.
+vec4 pixel_aa(sampler2D tex, vec2 tx_per_px, vec2 tx_to_uv, vec2 tx_coord,
+              float sharpness, bool gamma_correct, bool sample_subpx,
+              bool subpx_bgr) {
+    if (sample_subpx) {
+        // Subpixel sampling: Shift the sampling by 1/3rd of an output pixel for
+        // each subpixel, assuming that the output size is at monitor
+        // resolution.
+        const vec2 sub_tx_offset =
+            vec2(tx_per_px.x / 3.0 * (subpx_bgr ? -1.0 : 1.0), 0.0);
+        vec3 res;
+        for (int i = -1; i < 2; ++i) {
+            res[i + 1] = sample_aa(tex, tx_per_px, tx_to_uv,
+                                   tx_coord + sub_tx_offset * float(i),
+                                   sharpness, gamma_correct)[i + 1];
+        }
+        return vec4(res, 1.0);
+    } else {
+        return vec4(sample_aa(tex, tx_per_px, tx_to_uv, tx_coord, sharpness,
+                              gamma_correct),
+                    1.0);
+    }
 }
