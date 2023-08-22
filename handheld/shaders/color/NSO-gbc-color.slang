@@ -6,7 +6,8 @@
    Author: hunterk
    License: Public domain
 */
-// Shader that replicates the LCD Colorspace from Gameboy Color --
+// Shader that replicates the Nintendo Switch Online's GBC color filter --
+// (Experimental WIP shader. Due to how complex the NSO GBC filter used (using different gamma ramps and greyscale temperatures), it couldn't be replicated to a shader as of now completely, so a side effect of using correct color metrics for RGB, is warm greyscales. This is not an issue with NSO GBA Filter which was easy to replicate. If you want an actual NSO GBC replication, use Reshade NSO-GBC shader pack instead that uses Reshade LUT shader)
 
 layout(push_constant) uniform Push
 {
@@ -27,8 +28,8 @@ int color_mode = int(global.mode);
 
 #pragma parameter lighten_screen "Lighten Screen" 1.0 0.0 1.0 0.05
 
-#define target_gamma 2.2
-#define display_gamma 2.2
+#define target_gamma 1.0
+#define display_gamma 1.0
 
 /*
 We'll define our color weights in this pattern:
@@ -39,25 +40,25 @@ We'll define our color weights in this pattern:
 */
 
 const mat4 GBC_sRGB = mat4(
-	0.80, 0.135, 0.195, 0.0,  //red channel
-	0.275, 0.64, 0.155, 0.0,  //green channel
-	-0.075, 0.225, 0.65, 0.0,  //blue channel
-	0.0,  0.0,  0.0,  0.93   //alpha channel
+	0.84, 0.105, 0.15, 0.0,  //red channel
+	0.265, 0.67, 0.30, 0.0,  //green channel
+	0.0, 0.24, 0.525, 0.0,  //blue channel
+	0.175,  0.18,  0.18,  0.85   //alpha channel
 ); 
 
 const mat4 GBC_DCI = mat4(
-	0.685, 0.16, 0.20, 0.0,  //red channel
-	0.34, 0.629, 0.19, 0.0,  //green channel
-	-0.025, 0.211, 0.61, 0.0,  //blue channel
-	0.0,  0.0,  0.0,  0.975  //alpha channel
+	0.69, 0.17, 0.195, 0.0,  //red channel
+	0.31, 0.61, 0.165, 0.0,  //green channel
+	0.0, 0.22, 0.64, 0.0,  //blue channel
+	0.0,   0.0,   0.0,   1.0  //alpha channel
 ); 
 
 const mat4 GBC_Rec2020 = mat4(
-	0.555, 0.1825, 0.20, 0.0,  //red channel
-	0.395, 0.61, 0.195, 0.0,  //green channel
-	0.05, 0.2075, 0.605, 0.0,  //blue channel
+	0.57, 0.195, 0.195, 0.0,  //red channel
+	0.37, 0.605, 0.175, 0.0,  //green channel
+	0.06, 0.22, 0.63,  0.0,  //blue channel
 	0.0,   0.0,  0.0,   1.0  //alpha channel
-);
+); 
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
