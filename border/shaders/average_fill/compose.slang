@@ -1,7 +1,7 @@
 #version 450
 
 /*
-    Average fill v1.6 by fishku
+    Average fill v1.7 by fishku
     Copyright (C) 2023
     Public domain license (CC0)
 
@@ -27,6 +27,7 @@
     3 = Smooth angle-based blending
 
     Changelog:
+    v1.7: Add overscale option from crop and scale library.
     v1.6: Refactor for new scaling library. Add rotation support.
     v1.5: Optimize. Update to new Pixel AA version.
     v1.4: Add anti-aliased interpolation for non-integer scaling.
@@ -41,28 +42,32 @@
 #include "../../../pixel-art-scaling/shaders/pixel_aa/parameters.slang"
 // clang-format on
 
-#include "../../../misc/shaders/scaling.slang"
+#include "../../../misc/shaders/crop_and_scale/crop_and_scale.slang"
 #include "../../../pixel-art-scaling/shaders/pixel_aa/shared.slang"
 
 layout(push_constant) uniform Push {
     vec4 InputSize;
     vec4 OutputSize;
     uint Rotation;
-    float OS_CROP_TOP;
-    float OS_CROP_BOTTOM;
-    float OS_CROP_LEFT;
-    float OS_CROP_RIGHT;
-    float CENTER_AFTER_CROPPING;
-    float SAMPLE_SIZE;
+    // Own settings
     float EXTEND_H;
     float EXTEND_V;
     float CORNER_BLEND_MODE;
+    float FILL_GAMMA;
+    float SAMPLE_SIZE;
+    // From crop and scale, scaling section
     float FORCE_ASPECT_RATIO;
     float ASPECT_H;
     float ASPECT_V;
     float FORCE_INTEGER_SCALING_H;
     float FORCE_INTEGER_SCALING_V;
-    float FILL_GAMMA;
+    float OVERSCALE;
+    // From crop and scale, cropping section
+    float OS_CROP_TOP;
+    float OS_CROP_BOTTOM;
+    float OS_CROP_LEFT;
+    float OS_CROP_RIGHT;
+    float CENTER_AFTER_CROPPING;
     // From pixel AA
     float PIX_AA_SHARP;
     float PIX_AA_SUBPX;
@@ -95,6 +100,7 @@ void main() {
         param.CENTER_AFTER_CROPPING, param.FORCE_ASPECT_RATIO,
         vec2(param.ASPECT_H, param.ASPECT_V),
         vec2(param.FORCE_INTEGER_SCALING_H, param.FORCE_INTEGER_SCALING_V),
+        param.OVERSCALE,
         /* output_size_is_final_viewport_size = */ false);
     tx_coord = o2i(vTexCoord, param.InputSize.xy, crop, param.Rotation,
                    param.CENTER_AFTER_CROPPING, scale_o2i);
