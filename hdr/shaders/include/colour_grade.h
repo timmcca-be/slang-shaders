@@ -204,7 +204,7 @@ vec3 ColourGrade(const vec3 colour)
 
    const vec3 white_point     = WhiteBalance(temperature[colour_system], colour);
 
-   const vec3 linear          = r601r709ToLinear(white_point); //pow(white_point, vec3(HCRT_GAMMA_IN));
+   const vec3 linear          = pow(white_point, vec3(HCRT_GAMMA_IN)); // r601r709ToLinear(white_point); 
 
    const vec3 xyz             = phosphor_set == 0 ? linear * kStandardsColourGamut[colour_system] : linear * kPhosphorColourGamut[phosphor_set - 1];
 
