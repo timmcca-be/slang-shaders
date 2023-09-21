@@ -9,26 +9,27 @@
 
 layout(push_constant) uniform Push
 {
-	vec4 SourceSize;
-	vec4 OriginalSize;
-	vec4 OutputSize;
-	uint FrameCount;
+    vec4 SourceSize;
+    vec4 OriginalSize;
+    vec4 OutputSize;
+    uint FrameCount;
   float CURV;
   float SCAN;
   float MASK;
   float LUM;
   float INTERL;
-  float SAT;
+  float SAT, LANC;
 } params;
 
 // Parameter lines go here:
 
 #pragma parameter CURV "CRT-Geom Curvature" 1.0 0.0 1.0 1.0
-#pragma parameter SCAN "CRT-Geom Scanline Weight" 0.25 0.2 0.6 0.05
-#pragma parameter MASK "CRT-Geom Dotmask Strength" 0.25 0.0 1.0 0.05
-#pragma parameter LUM "CRT-Geom Luminance" 0.12 0.0 0.5 0.01
+#pragma parameter SCAN "CRT-Geom Scanline Weight" 0.2 0.2 0.6 0.05
+#pragma parameter MASK "CRT-Geom Dotmask Strength" 0.2 0.0 1.0 0.05
+#pragma parameter LUM "CRT-Geom Luminance" 0.05 0.0 0.5 0.01
 #pragma parameter INTERL "CRT-Geom Interlacing Simulation" 1.0 0.0 1.0 1.0
 #pragma parameter SAT "CRT-Geom Saturation" 1.1 0.0 2.0 0.01
+#pragma parameter LANC "Filter profile: Accurate/Fast" 0.0 0.0 1.0 1.0
 
 #define PI 3.1415926535897932384626433
 #define SourceSize params.SourceSize
@@ -42,10 +43,10 @@ layout(push_constant) uniform Push
 #define LUM params.LUM
 #define INTERL params.INTERL
 #define SAT params.SAT
-
+#define LANC params.LANC
 layout(std140, set = 0, binding = 0) uniform UBO
 {
-	mat4 MVP;
+    mat4 MVP;
 } global;
 
 #pragma stage vertex
@@ -59,8 +60,8 @@ layout(location = 4) out float fragpos;
 
 void main()
 {
-	gl_Position = global.MVP * Position;
-	vTexCoord = TexCoord * 1.0001;
+    gl_Position = global.MVP * Position;
+    vTexCoord = TexCoord * 1.0001;
     scale = SourceSize.xy/OriginalSize.xy;
     warpp = vTexCoord.xy*scale;   
     fragpos = warpp.x*OutputSize.x*PI;
@@ -79,7 +80,7 @@ layout(set = 0, binding = 1) uniform sampler2D Source;
 
 float scan(float pos, vec3 color)
     {
-    float wid = SCAN + 0.1 * dot(color, vec3(0.333))*0.8;
+    float wid = SCAN + 0.1 * max(max(color.r,color.g),color.b);
     float weight = pos / wid;
     return  LUM + (0.1 + SCAN) * exp(-weight * weight ) / wid;
     }
@@ -115,8 +116,13 @@ void main()
     // Calculate weights in x and y in parallel.
     // These polynomials are piecewise approximation of Lanczos kernel
     // Calculator here: https://gist.github.com/going-digital/752271db735a07da7617079482394543
-    vec4 l2_w0_o3 = (-1.1828) * f + 1.1298;
-    vec4 l2_w1_o3 = (0.0858) * f - 0.0792;
+ vec4 l2_w0_o3, l2_w1_o3;
+    if (LANC == 0.0)
+     {l2_w0_o3 = (((1.5672) * f - 2.6445) * f + 0.0837) * f + 0.9976;
+      l2_w1_o3 = (((-0.7389) * f + 1.3652) * f - 0.6295) * f - 0.0004;}
+    else  {l2_w0_o3 = (-1.1828) * f + 1.1298;
+           l2_w1_o3 = (0.0858) * f - 0.0792;}
+
 
     vec4 w1_2  = l2_w0_o3;
     vec2 w12   = w1_2.xy + w1_2.zw;
@@ -153,7 +159,7 @@ void main()
     res *= sqrt(scn*msk);
 
     float l = dot(vec3(0.29, 0.6, 0.11), res);
-    res *= mix(1.0, 1.1, l);
+    res *= mix(1.0, 1.2, l);
     res  = mix(vec3(l), res, SAT);
 
 if (corn.y <= corn.x && CURV == 1.0 || corn.x < 0.0001 && CURV == 1.0 ) res = vec3(0.0);
